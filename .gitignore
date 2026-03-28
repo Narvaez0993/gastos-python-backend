@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.env
+.venv/
+venv/
+gastos.db
+uploads/*
+!uploads/.gitkeep
+alembic/versions/*.py
+!alembic/versions/.gitkeep
+.DS_Store
