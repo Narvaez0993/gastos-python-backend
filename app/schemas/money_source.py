@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -11,6 +11,12 @@ class MoneySourceCreate(BaseModel):
     balance: float = 0
 
 
+class MoneySourceUpdate(BaseModel):
+    balance: Optional[float] = None
+    enabled: Optional[bool] = None
+    name: Optional[str] = None
+
+
 class MoneySourceOut(BaseModel):
     id: int
     person_id: int
@@ -18,18 +24,10 @@ class MoneySourceOut(BaseModel):
     name_normalized: str
     balance: float
     enabled: bool
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
-
-
-class MoneySourceUpdate(BaseModel):
-    balance: float | None = None
-    enabled: bool | None = None
-    name: str | None = None
+    created_at: str
 
 
 class DepositRequest(BaseModel):
     amount: float
-    note: str | None = None
-    date: str | None = None
+    note: Optional[str] = None
+    date: Optional[str] = None
