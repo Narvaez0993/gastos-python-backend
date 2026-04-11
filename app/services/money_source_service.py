@@ -36,17 +36,13 @@ def _format_movement(row):
 class MoneySourceService:
 
     @staticmethod
-    def list_money_sources(person_name):
-        if not person_name:
+    def list_money_sources(person_id):
+        if not person_id:
             raise HTTPException(
-                status_code=400, detail="El parámetro personName es requerido"
+                status_code=400, detail="El parámetro personId es requerido"
             )
 
-        person = PersonDAO.get_by_name(person_name)
-        if not person:
-            return []
-
-        return MoneySourceDAO.get_by_person(person["id"])
+        return MoneySourceDAO.get_by_person(person_id)
 
     @staticmethod
     def get_money_source(source_id):
@@ -57,29 +53,29 @@ class MoneySourceService:
 
     @staticmethod
     def create_money_source(data):
-        if not data.personName or not data.name:
+        if not data.person_id or not data.name:
             raise HTTPException(
-                status_code=400, detail="personName y name son requeridos"
+                status_code=400, detail="person_id y name son requeridos"
             )
 
-        person = PersonDAO.get_by_name(data.personName)
+        person = PersonDAO.get_by_id(data.person_id)
         if not person:
             raise HTTPException(
                 status_code=404,
-                detail=f'Persona "{data.personName}" no encontrada',
+                detail=f"Persona con id {data.person_id} no encontrada",
             )
 
         name = data.name.strip()
         name_normalized = name.lower().strip()
 
-        if MoneySourceDAO.check_duplicate_name(person["id"], name_normalized):
+        if MoneySourceDAO.check_duplicate_name(data.person_id, name_normalized):
             raise HTTPException(
                 status_code=409,
                 detail=f'Ya tienes una fuente de dinero llamada "{data.name}"',
             )
 
         source = MoneySourceDAO.create(
-            person["id"], name, name_normalized, data.balance
+            data.person_id, name, name_normalized, data.balance
         )
 
         if data.balance and data.balance != 0:

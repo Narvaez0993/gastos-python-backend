@@ -40,15 +40,8 @@ def _format_expense(row):
 class ExpenseService:
 
     @staticmethod
-    def list_expenses(person_name=None, period=None, start_date=None,
+    def list_expenses(person_id=None, period=None, start_date=None,
                       end_date=None, tz="America/Bogota"):
-        person_id = None
-        if person_name:
-            person = PersonDAO.get_by_name(person_name)
-            if not person:
-                return []
-            person_id = person["id"]
-
         range_start, range_end = get_period_range(period, start_date, end_date, tz)
         start_str = range_start.isoformat() if range_start else None
         end_str = range_end.isoformat() if range_end else None
@@ -65,34 +58,24 @@ class ExpenseService:
 
     @staticmethod
     def create_expense(data, tz="America/Bogota"):
-        if not data.personName or not data.amount or not data.description or not data.date:
+        if not data.person_id or not data.amount or not data.description or not data.date:
             raise HTTPException(
                 status_code=400,
-                detail="personName, amount, description y date son requeridos",
+                detail="person_id, amount, description y date son requeridos",
             )
 
-        person = PersonDAO.get_by_name(data.personName)
+        person = PersonDAO.get_by_id(data.person_id)
         if not person:
             raise HTTPException(
                 status_code=404,
-                detail=f'Persona "{data.personName}" no encontrada',
+                detail=f"Persona con id {data.person_id} no encontrada",
             )
 
         source = None
-        if data.moneySourceId:
-            source = MoneySourceDAO.get_by_id(data.moneySourceId)
+        if data.money_source_id:
+            source = MoneySourceDAO.get_by_id(data.money_source_id)
             if not source or source["person_id"] != person["id"]:
                 raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
-        elif data.moneySourceName:
-            normalized = data.moneySourceName.lower().strip()
-            source = MoneySourceDAO.get_by_person_and_normalized_name(
-                person["id"], normalized
-            )
-            if not source:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f'Fuente de dinero "{data.moneySourceName}" no encontrada',
-                )
 
         if source and not source["enabled"]:
             raise HTTPException(
@@ -169,7 +152,7 @@ class ExpenseService:
             description=data.description.strip(),
             category=data.category.strip() if data.category else None,
             date=expense_date_str,
-            money_source_id=data.moneySourceId,
+            money_source_id=data.money_source_id,
         )
 
         if not updated:
@@ -204,15 +187,8 @@ class ExpenseService:
         return {"message": "Gasto eliminado"}
 
     @staticmethod
-    def get_summary(person_name=None, period=None, start_date=None,
+    def get_summary(person_id=None, period=None, start_date=None,
                     end_date=None, tz="America/Bogota"):
-        person_id = None
-        if person_name:
-            person = PersonDAO.get_by_name(person_name)
-            if not person:
-                return {"total": 0, "by_category": []}
-            person_id = person["id"]
-
         range_start, range_end = get_period_range(period, start_date, end_date, tz)
         start_str = range_start.isoformat() if range_start else None
         end_str = range_end.isoformat() if range_end else None

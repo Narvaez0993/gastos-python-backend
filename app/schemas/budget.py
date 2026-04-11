@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 
 class BudgetCreate(BaseModel):
-    personName: str
+    person_id: int
     type: str
     amount: float
 
