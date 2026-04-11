@@ -19,17 +19,13 @@ def _format_budget(row):
 class BudgetService:
 
     @staticmethod
-    def list_budgets(person_name):
-        if not person_name:
+    def list_budgets(person_id):
+        if not person_id:
             raise HTTPException(
-                status_code=400, detail="El parámetro personName es requerido"
+                status_code=400, detail="El parámetro personId es requerido"
             )
 
-        person = PersonDAO.get_by_name(person_name)
-        if not person:
-            return []
-
-        rows = BudgetDAO.get_by_person(person["id"])
+        rows = BudgetDAO.get_by_person(person_id)
         return [_format_budget(row) for row in rows]
 
     @staticmethod
@@ -41,10 +37,10 @@ class BudgetService:
 
     @staticmethod
     def create_or_update_budget(data):
-        if not data.personName or not data.type or not data.amount:
+        if not data.person_id or not data.type or not data.amount:
             raise HTTPException(
                 status_code=400,
-                detail="personName, type y amount son requeridos",
+                detail="person_id, type y amount son requeridos",
             )
 
         if data.type not in ("daily", "weekly", "monthly"):
@@ -53,14 +49,14 @@ class BudgetService:
                 detail="type debe ser daily, weekly o monthly",
             )
 
-        person = PersonDAO.get_by_name(data.personName)
+        person = PersonDAO.get_by_id(data.person_id)
         if not person:
             raise HTTPException(
                 status_code=404,
-                detail=f'Persona "{data.personName}" no encontrada',
+                detail=f"Persona con id {data.person_id} no encontrada",
             )
 
-        existing = BudgetDAO.get_by_person_and_type(person["id"], data.type)
+        existing = BudgetDAO.get_by_person_and_type(data.person_id, data.type)
 
         if existing:
             updated = BudgetDAO.update(existing["id"], amount=data.amount, enabled=True)
@@ -73,7 +69,7 @@ class BudgetService:
                 "created_at": updated["created_at"],
             }
 
-        created = BudgetDAO.create(person["id"], data.type, data.amount)
+        created = BudgetDAO.create(data.person_id, data.type, data.amount)
         return {
             "id": created["id"],
             "person_id": created["person_id"],

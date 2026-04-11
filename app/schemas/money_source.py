@@ -6,7 +6,7 @@ from pydantic import BaseModel
 
 
 class MoneySourceCreate(BaseModel):
-    personName: str
+    person_id: int
     name: str
     balance: float = 0
 

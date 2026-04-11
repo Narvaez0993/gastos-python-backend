@@ -10,7 +10,7 @@ router = APIRouter(prefix="/api/expenses", tags=["Gastos"])
 
 @router.get("/summary", summary="Resumen de gastos por categoría")
 def get_summary(
-    personName: Optional[str] = Query(None),
+    personId: Optional[int] = Query(None),
     period: Optional[str] = Query(None),
     startDate: Optional[str] = Query(None),
     endDate: Optional[str] = Query(None),
@@ -20,7 +20,7 @@ def get_summary(
     """Retorna el total gastado y desglose por categoría."""
     resolved_tz = resolve_tz(tz, x_timezone)
     return ExpenseService.get_summary(
-        personName, period, startDate, endDate, resolved_tz
+        personId, period, startDate, endDate, resolved_tz
     )
 
 
@@ -32,7 +32,7 @@ def get_expense(expense_id: int):
 
 @router.get("", summary="Listar gastos")
 def list_expenses(
-    personName: Optional[str] = Query(None),
+    personId: Optional[int] = Query(None),
     period: Optional[str] = Query(None),
     startDate: Optional[str] = Query(None),
     endDate: Optional[str] = Query(None),
@@ -42,7 +42,7 @@ def list_expenses(
     """Lista los gastos con filtros opcionales por persona, periodo y fechas."""
     resolved_tz = resolve_tz(tz, x_timezone)
     return ExpenseService.list_expenses(
-        personName, period, startDate, endDate, resolved_tz
+        personId, period, startDate, endDate, resolved_tz
     )
 
 

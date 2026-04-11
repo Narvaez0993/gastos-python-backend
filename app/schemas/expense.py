@@ -6,13 +6,12 @@ from pydantic import BaseModel
 
 
 class ExpenseCreate(BaseModel):
-    personName: str
+    person_id: int
     amount: float
     description: str
     date: str
     category: Optional[str] = None
-    moneySourceId: Optional[int] = None
-    moneySourceName: Optional[str] = None
+    money_source_id: Optional[int] = None
 
 
 class ExpenseUpdate(BaseModel):
@@ -20,7 +19,7 @@ class ExpenseUpdate(BaseModel):
     description: str
     date: str
     category: Optional[str] = None
-    moneySourceId: Optional[int] = None
+    money_source_id: Optional[int] = None
 
 
 class ExpensePersonOut(BaseModel):

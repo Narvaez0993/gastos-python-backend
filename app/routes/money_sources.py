@@ -9,9 +9,9 @@ router = APIRouter(prefix="/api/money-sources", tags=["Fuentes de Dinero"])
 
 
 @router.get("", summary="Listar fuentes de dinero")
-def list_money_sources(personName: str = Query(...)):
+def list_money_sources(personId: int = Query(...)):
     """Lista las fuentes de dinero de una persona, ordenadas por habilitadas y luego por nombre."""
-    return MoneySourceService.list_money_sources(personName)
+    return MoneySourceService.list_money_sources(personId)
 
 
 @router.get("/{source_id}", summary="Obtener fuente de dinero por ID")

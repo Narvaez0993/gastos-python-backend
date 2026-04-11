@@ -7,9 +7,9 @@ router = APIRouter(prefix="/api/budgets", tags=["Presupuestos"])
 
 
 @router.get("", summary="Listar presupuestos por persona")
-def list_budgets(personName: str = Query(...)):
+def list_budgets(personId: int = Query(...)):
     """Retorna todos los presupuestos de una persona."""
-    return BudgetService.list_budgets(personName)
+    return BudgetService.list_budgets(personId)
 
 
 @router.get("/{budget_id}", summary="Obtener presupuesto por ID")
