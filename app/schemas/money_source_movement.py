@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -9,9 +9,7 @@ class MovementExpenseOut(BaseModel):
     id: int
     description: str
     amount: float
-    category: str | None
-
-    model_config = {"from_attributes": True}
+    category: Optional[str]
 
 
 class MovementOut(BaseModel):
@@ -21,12 +19,10 @@ class MovementOut(BaseModel):
     amount: float
     balance_before: float
     balance_after: float
-    expense: MovementExpenseOut | None = None
-    note: str | None
-    date: datetime
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    expense: Optional[MovementExpenseOut] = None
+    note: Optional[str]
+    date: str
+    created_at: str
 
 
 class PaginationOut(BaseModel):
@@ -43,9 +39,7 @@ class MovementsListOut(BaseModel):
 
 class DepositResponse(BaseModel):
     movement: MovementOut
-    source: "MoneySourceOut"  # noqa: F821
-
-    model_config = {"from_attributes": True}
+    source: MoneySourceOut
 
 
 from app.schemas.money_source import MoneySourceOut  # noqa: E402

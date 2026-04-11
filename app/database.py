@@ -1,23 +1,86 @@
-from sqlalchemy import create_engine
-from sqlalchemy.orm import DeclarativeBase, sessionmaker
+import sqlite3
+import os
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///./gastos.db"
-
-engine = create_engine(
-    SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False},
-)
-
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "gastos.db")
 
 
-class Base(DeclarativeBase):
-    pass
+def get_connection():
+    """Abre una nueva conexión a la base de datos SQLite de manera manual."""
+    conn = sqlite3.connect(DATABASE_PATH)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
 
 
-def get_db():
-    db = SessionLocal()
+def close_connection(conn):
+    """Cierra una conexión a la base de datos de manera manual."""
+    if conn:
+        conn.close()
+
+
+def init_db():
+    """Crea todas las tablas si no existen, usando SQL crudo."""
+    conn = get_connection()
     try:
-        yield db
+        cursor = conn.cursor()
+        cursor.executescript("""
+            CREATE TABLE IF NOT EXISTS persons (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL UNIQUE,
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            );
+
+            CREATE TABLE IF NOT EXISTS expenses (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                person_id INTEGER NOT NULL,
+                amount REAL NOT NULL,
+                description TEXT NOT NULL,
+                category TEXT,
+                date TEXT NOT NULL,
+                money_source_id INTEGER,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (person_id) REFERENCES persons(id),
+                FOREIGN KEY (money_source_id) REFERENCES money_sources(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS budgets (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                person_id INTEGER NOT NULL,
+                type TEXT NOT NULL CHECK(type IN ('daily', 'weekly', 'monthly')),
+                amount REAL NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(person_id, type),
+                FOREIGN KEY (person_id) REFERENCES persons(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS money_sources (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                person_id INTEGER NOT NULL,
+                name TEXT NOT NULL,
+                name_normalized TEXT NOT NULL,
+                balance REAL NOT NULL DEFAULT 0,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(person_id, name_normalized),
+                FOREIGN KEY (person_id) REFERENCES persons(id)
+            );
+
+            CREATE TABLE IF NOT EXISTS money_source_movements (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                money_source_id INTEGER NOT NULL,
+                type TEXT NOT NULL CHECK(type IN ('expense', 'deposit', 'adjustment')),
+                amount REAL NOT NULL,
+                balance_before REAL NOT NULL,
+                balance_after REAL NOT NULL,
+                expense_id INTEGER,
+                note TEXT,
+                date TEXT NOT NULL,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                FOREIGN KEY (money_source_id) REFERENCES money_sources(id),
+                FOREIGN KEY (expense_id) REFERENCES expenses(id)
+            );
+        """)
+        conn.commit()
     finally:
-        db.close()
+        close_connection(conn)

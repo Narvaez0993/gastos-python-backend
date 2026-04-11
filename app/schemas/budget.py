@@ -1,4 +1,6 @@
-from datetime import datetime
+from __future__ import annotations
+
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -9,10 +11,15 @@ class BudgetCreate(BaseModel):
     amount: float
 
 
+class BudgetUpdate(BaseModel):
+    type: Optional[str] = None
+    amount: Optional[float] = None
+    enabled: Optional[bool] = None
+
+
 class BudgetPersonOut(BaseModel):
     id: int
     name: str
-    model_config = {"from_attributes": True}
 
 
 class BudgetOut(BaseModel):
@@ -21,9 +28,7 @@ class BudgetOut(BaseModel):
     type: str
     amount: float
     enabled: bool
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    created_at: str
 
 
 class BudgetCreatedOut(BaseModel):
@@ -32,6 +37,4 @@ class BudgetCreatedOut(BaseModel):
     type: str
     amount: float
     enabled: bool
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    created_at: str
