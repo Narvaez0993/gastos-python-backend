@@ -3,16 +3,13 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 
 import pytz
-from sqlalchemy import func
-from sqlalchemy.orm import Session
 
-from app.models.budget import Budget
-from app.models.expense import Expense
-from app.models.person import Person
+from app.dao.budget_dao import BudgetDAO
+from app.dao.expense_dao import ExpenseDAO
 
 
 def get_offset_ms(tz: str, dt: datetime) -> int:
-    """Calculate timezone offset in milliseconds for a given datetime."""
+    """Calcula el offset de la zona horaria en milisegundos."""
     tz_obj = pytz.timezone(tz)
     utc_dt = dt.replace(tzinfo=timezone.utc)
     local_dt = utc_dt.astimezone(tz_obj)
@@ -23,21 +20,21 @@ def get_offset_ms(tz: str, dt: datetime) -> int:
 
 
 def today_in_tz(tz: str) -> str:
-    """Returns YYYY-MM-DD string for today in given timezone."""
+    """Retorna la fecha de hoy en formato YYYY-MM-DD en la zona horaria dada."""
     tz_obj = pytz.timezone(tz)
     now = datetime.now(tz_obj)
     return now.strftime("%Y-%m-%d")
 
 
 def local_day_start_utc(date_str: str, tz: str) -> datetime:
-    """Converts local date's 00:00:00 to UTC datetime."""
+    """Convierte las 00:00:00 de una fecha local a UTC."""
     tz_obj = pytz.timezone(tz)
     local_dt = tz_obj.localize(datetime.strptime(date_str, "%Y-%m-%d"))
     return local_dt.astimezone(timezone.utc)
 
 
 def local_day_end_utc(date_str: str, tz: str) -> datetime:
-    """Converts local date's 23:59:59.999 to UTC datetime."""
+    """Convierte las 23:59:59.999 de una fecha local a UTC."""
     tz_obj = pytz.timezone(tz)
     local_dt = tz_obj.localize(
         datetime.strptime(date_str, "%Y-%m-%d").replace(
@@ -53,7 +50,7 @@ def get_period_range(
     end_date: str | None,
     tz: str,
 ) -> tuple[datetime | None, datetime | None]:
-    """Calculate date range based on period or explicit dates."""
+    """Calcula el rango de fechas basado en periodo o fechas explícitas."""
     if start_date and end_date:
         return local_day_start_utc(start_date, tz), local_day_end_utc(end_date, tz)
 
@@ -66,7 +63,7 @@ def get_period_range(
     if period == "daily":
         return local_day_start_utc(today, tz), local_day_end_utc(today, tz)
     elif period == "weekly":
-        weekday = today_dt.weekday()  # Monday = 0
+        weekday = today_dt.weekday()
         monday = today_dt - timedelta(days=weekday)
         monday_str = monday.strftime("%Y-%m-%d")
         return local_day_start_utc(monday_str, tz), local_day_end_utc(today, tz)
@@ -79,54 +76,36 @@ def get_period_range(
 
 
 def parse_date_to_noon_utc(date_str: str) -> datetime:
-    """Converts YYYY-MM-DD to noon UTC."""
+    """Convierte YYYY-MM-DD a mediodía UTC."""
     dt = datetime.strptime(date_str, "%Y-%m-%d")
     return dt.replace(hour=12, minute=0, second=0, microsecond=0, tzinfo=timezone.utc)
 
 
-def check_budgets(
-    db: Session, person_name: str, tz: str = "America/Bogota"
-) -> list[dict]:
-    """Check budgets and return alerts for those >= 80% spent."""
-    person = db.query(Person).filter(Person.name == person_name).first()
-    if not person:
-        return []
-
-    budgets = (
-        db.query(Budget)
-        .filter(Budget.person_id == person.id, Budget.enabled.is_(True))
-        .all()
-    )
-
+def check_budgets(person_id: int, tz: str = "America/Bogota") -> list[dict]:
+    """Verifica presupuestos y retorna alertas para los que están >= 80% gastados."""
+    budgets = BudgetDAO.get_enabled_by_person(person_id)
     alerts: list[dict] = []
 
     for budget in budgets:
-        start, end = get_period_range(budget.type, None, None, tz)
+        start, end = get_period_range(budget["type"], None, None, tz)
         if start is None or end is None:
             continue
 
-        spent_result = (
-            db.query(func.coalesce(func.sum(Expense.amount), 0))
-            .filter(
-                Expense.person_id == person.id,
-                Expense.date >= start,
-                Expense.date <= end,
-            )
-            .scalar()
+        spent = ExpenseDAO.get_spent_in_period(
+            person_id, start.isoformat(), end.isoformat()
         )
-        spent = float(spent_result)
 
-        if budget.amount <= 0:
+        if budget["amount"] <= 0:
             continue
 
-        percentage = round((spent / budget.amount) * 100)
+        percentage = round((spent / budget["amount"]) * 100)
         if percentage >= 80:
             alerts.append(
                 {
-                    "type": budget.type,
-                    "limit": budget.amount,
+                    "type": budget["type"],
+                    "limit": budget["amount"],
                     "spent": spent,
-                    "remaining": budget.amount - spent,
+                    "remaining": budget["amount"] - spent,
                     "percentage": percentage,
                 }
             )
