@@ -1,14 +1,31 @@
 from __future__ import annotations
 
-from datetime import datetime
+from typing import Optional
 
 from pydantic import BaseModel
+
+
+class ExpenseCreate(BaseModel):
+    personName: str
+    amount: float
+    description: str
+    date: str
+    category: Optional[str] = None
+    moneySourceId: Optional[int] = None
+    moneySourceName: Optional[str] = None
+
+
+class ExpenseUpdate(BaseModel):
+    amount: float
+    description: str
+    date: str
+    category: Optional[str] = None
+    moneySourceId: Optional[int] = None
 
 
 class ExpensePersonOut(BaseModel):
     id: int
     name: str
-    model_config = {"from_attributes": True}
 
 
 class ExpenseMoneySourceOut(BaseModel):
@@ -16,7 +33,6 @@ class ExpenseMoneySourceOut(BaseModel):
     name: str
     balance: float
     enabled: bool
-    model_config = {"from_attributes": True}
 
 
 class ExpenseOut(BaseModel):
@@ -24,13 +40,10 @@ class ExpenseOut(BaseModel):
     person: ExpensePersonOut
     amount: float
     description: str
-    category: str | None
-    date: datetime
-    money_source: ExpenseMoneySourceOut | None = None
-    images: list[str] = []
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    category: Optional[str]
+    date: str
+    money_source: Optional[ExpenseMoneySourceOut] = None
+    created_at: str
 
 
 class ExpenseCreatedOut(BaseModel):
@@ -38,13 +51,10 @@ class ExpenseCreatedOut(BaseModel):
     person_id: int
     amount: float
     description: str
-    category: str | None
-    date: datetime
-    money_source_id: int | None = None
-    images: list[str] = []
-    created_at: datetime
-
-    model_config = {"from_attributes": True}
+    category: Optional[str]
+    date: str
+    money_source_id: Optional[int] = None
+    created_at: str
 
 
 class MoneySourceInfo(BaseModel):
@@ -52,7 +62,7 @@ class MoneySourceInfo(BaseModel):
     balance_before: float
     amount_deducted: float
     balance_after: float
-    warning: str | None = None
+    warning: Optional[str] = None
 
 
 class BudgetAlert(BaseModel):
@@ -66,7 +76,7 @@ class BudgetAlert(BaseModel):
 class ExpenseCreateResponse(BaseModel):
     expense: ExpenseCreatedOut
     budget_alerts: list[BudgetAlert] = []
-    money_source: MoneySourceInfo | None = None
+    money_source: Optional[MoneySourceInfo] = None
 
 
 class CategorySummary(BaseModel):

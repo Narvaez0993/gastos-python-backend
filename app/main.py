@@ -1,16 +1,38 @@
-import os
-
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.staticfiles import StaticFiles
 
-from app.database import Base, engine
+from app.database import init_db
 from app.routes import budgets, expenses, money_sources, persons
 
-Base.metadata.create_all(bind=engine)
-
-app = FastAPI(title="Gastos App API", version="1.0.0")
+app = FastAPI(
+    title="API de Gestión de Gastos",
+    description=(
+        "API REST para el registro y seguimiento de gastos personales. "
+        "Permite gestionar personas, gastos, presupuestos y fuentes de dinero. "
+        "Implementada con arquitectura por capas (Routes → Services → DAO) "
+        "y conexión manual a SQLite con SQL crudo."
+    ),
+    version="1.0.0",
+    openapi_tags=[
+        {
+            "name": "Personas",
+            "description": "Operaciones CRUD para la gestión de personas registradas en el sistema.",
+        },
+        {
+            "name": "Gastos",
+            "description": "Operaciones para crear, consultar, actualizar y eliminar gastos.",
+        },
+        {
+            "name": "Presupuestos",
+            "description": "Gestión de presupuestos diarios, semanales y mensuales por persona.",
+        },
+        {
+            "name": "Fuentes de Dinero",
+            "description": "Gestión de fuentes de dinero (cuentas, billeteras), depósitos y movimientos.",
+        },
+    ],
+)
 
 app.add_middleware(
     CORSMiddleware,
@@ -20,19 +42,21 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-uploads_dir = os.path.join(os.path.dirname(os.path.dirname(__file__)), "uploads")
-os.makedirs(uploads_dir, exist_ok=True)
-app.mount("/uploads", StaticFiles(directory=uploads_dir), name="uploads")
-
 app.include_router(persons.router)
 app.include_router(expenses.router)
-app.include_router(money_sources.router)
 app.include_router(budgets.router)
+app.include_router(money_sources.router)
 
 
-@app.get("/")
+@app.on_event("startup")
+def on_startup():
+    init_db()
+
+
+@app.get("/", tags=["Root"], summary="Estado de la API")
 def root():
-    return {"message": "Gastos App API running"}
+    """Verifica que la API está funcionando correctamente."""
+    return {"message": "API de Gestión de Gastos funcionando"}
 
 
 if __name__ == "__main__":

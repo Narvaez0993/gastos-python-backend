@@ -1,21 +1,36 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.orm import Session
+from fastapi import APIRouter
 
-from app.controllers import person_controller
-from app.database import get_db
-from app.schemas.person import PersonCreate, PersonOut
+from app.schemas.person import PersonCreate, PersonUpdate
+from app.services.person_service import PersonService
 
-router = APIRouter(prefix="/api/persons", tags=["Persons"])
+router = APIRouter(prefix="/api/persons", tags=["Personas"])
 
 
-@router.post("/", response_model=PersonOut, status_code=201)
-def create_person(data: PersonCreate, db: Session = Depends(get_db)):
-    """Create a new person."""
-    person = person_controller.create_person(db, data)
-    return person
+@router.get("", summary="Listar todas las personas")
+def list_persons():
+    """Retorna todas las personas registradas ordenadas alfabéticamente."""
+    return PersonService.list_persons()
 
 
-@router.get("/", response_model=list[PersonOut])
-def list_persons(db: Session = Depends(get_db)):
-    """List all persons sorted alphabetically."""
-    return person_controller.list_persons(db)
+@router.get("/{person_id}", summary="Obtener persona por ID")
+def get_person(person_id: int):
+    """Retorna una persona específica por su ID."""
+    return PersonService.get_person(person_id)
+
+
+@router.post("", status_code=201, summary="Crear persona")
+def create_person(data: PersonCreate):
+    """Crea una nueva persona. El nombre debe ser único."""
+    return PersonService.create_person(data)
+
+
+@router.put("/{person_id}", summary="Actualizar persona")
+def update_person(person_id: int, data: PersonUpdate):
+    """Actualiza el nombre de una persona existente."""
+    return PersonService.update_person(person_id, data)
+
+
+@router.delete("/{person_id}", summary="Eliminar persona")
+def delete_person(person_id: int):
+    """Elimina una persona del sistema."""
+    return PersonService.delete_person(person_id)

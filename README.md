@@ -1,66 +1,149 @@
-# Gastos Python Backend
+# API de Gestión de Gastos
 
-REST API for expense tracking with budget alerts, money source management, and image uploads. Built with FastAPI + SQLAlchemy + SQLite.
+API REST para el registro y seguimiento de gastos personales. Permite gestionar personas, gastos, presupuestos y fuentes de dinero.
 
-## Requirements
+Implementada con arquitectura por capas (Routes → Services → DAO) y conexión manual a SQLite con SQL crudo.
 
-- Python 3.11+
+## Tecnologías
 
-## Setup
+- **Python 3.9+**
+- **FastAPI** — Framework web
+- **SQLite** — Base de datos relacional
+- **sqlite3** — Driver de conexión manual (sin ORM)
+- **Pydantic** — Validación de datos
+- **Uvicorn** — Servidor ASGI
+
+## Arquitectura
+
+```
+Routes (endpoints REST)  →  Services (lógica de negocio)  →  DAO (SQL crudo)  →  SQLite
+```
+
+```
+app/
+├── main.py          # Punto de entrada, configuración Swagger y CORS
+├── database.py      # Conexión manual a SQLite con sqlite3
+├── dao/             # Capa de persistencia - Patrón DAO con SQL crudo
+├── services/        # Capa de lógica de negocio
+├── schemas/         # Esquemas Pydantic (validación request/response)
+├── routes/          # Endpoints REST (GET, POST, PUT, DELETE)
+└── utils/           # Utilidades (zonas horarias, verificación de presupuestos)
+```
+
+## Requisitos previos
+
+- **Python 3.9** o superior instalado en el sistema
+- **pip** (gestor de paquetes de Python)
+- **Git**
+
+Para verificar que tienes Python instalado:
 
 ```bash
-# Create virtual environment
+python3 --version
+```
+
+## Instalación y ejecución
+
+### 1. Clonar el repositorio
+
+```bash
+git clone <URL_DEL_REPOSITORIO>
+cd gastos-python-backend
+```
+
+### 2. Crear entorno virtual
+
+```bash
 python3 -m venv venv
+```
+
+### 3. Activar entorno virtual
+
+En **macOS / Linux**:
+```bash
 source venv/bin/activate
+```
 
-# Install dependencies
+En **Windows** (cmd):
+```bash
+venv\Scripts\activate
+```
+
+En **Windows** (PowerShell):
+```bash
+venv\Scripts\Activate.ps1
+```
+
+### 4. Instalar dependencias
+
+```bash
 pip install -r requirements.txt
+```
 
-# Run database migrations
-alembic upgrade head
+### 5. Ejecutar el servidor
 
-# Start server (port 3002)
+```bash
 python -m app.main
 ```
 
-The server starts at `http://localhost:3002`.
+El servidor se inicia en `http://localhost:3002`.
 
-## API Endpoints
+La base de datos SQLite (`gastos.db`) se crea automáticamente al iniciar el servidor por primera vez.
 
-### Persons
-- `POST /api/persons` — Create a person
-- `GET /api/persons` — List all persons
+### 6. Abrir la documentación Swagger
 
-### Expenses
-- `POST /api/expenses` — Create expense (multipart form, supports image uploads)
-- `GET /api/expenses` — List expenses (filters: `personName`, `period`, `startDate`, `endDate`, `tz`)
-- `GET /api/expenses/summary` — Expense summary by category
-- `GET /api/expenses/{id}` — Get single expense
-- `DELETE /api/expenses/{id}` — Delete expense (reverts money source balance)
+Ir a `http://localhost:3002/docs` en el navegador para ver y probar todos los endpoints de la API.
 
-### Budgets
-- `POST /api/budgets` — Create or update budget (upsert by person + type)
-- `GET /api/budgets?personName=...` — List budgets for a person
-- `DELETE /api/budgets/{id}` — Delete budget
+## Endpoints de la API
 
-### Money Sources
-- `POST /api/money-sources` — Create money source
-- `GET /api/money-sources?personName=...` — List money sources
-- `PATCH /api/money-sources/{id}` — Update money source
-- `DELETE /api/money-sources/{id}` — Delete (only if no movements)
-- `POST /api/money-sources/{id}/deposit` — Register deposit
-- `GET /api/money-sources/{id}/movements` — Movement history (paginated)
+### Personas (`/api/persons`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/persons` | Listar todas las personas |
+| GET | `/api/persons/{id}` | Obtener persona por ID |
+| POST | `/api/persons` | Crear persona |
+| PUT | `/api/persons/{id}` | Actualizar persona |
+| DELETE | `/api/persons/{id}` | Eliminar persona |
 
-## Configuration
+### Gastos (`/api/expenses`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/expenses` | Listar gastos (filtros: `personName`, `period`, `startDate`, `endDate`) |
+| GET | `/api/expenses/summary` | Resumen por categoría |
+| GET | `/api/expenses/{id}` | Obtener gasto por ID |
+| POST | `/api/expenses` | Crear gasto |
+| PUT | `/api/expenses/{id}` | Actualizar gasto |
+| DELETE | `/api/expenses/{id}` | Eliminar gasto |
 
-| Variable | Default |
-|---|---|
-| Port | 3002 |
-| Database | `./gastos.db` (SQLite) |
-| Timezone | `America/Bogota` |
-| CORS | Open (all origins) |
-| Upload dir | `./uploads/` |
+### Presupuestos (`/api/budgets`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/budgets?personName=...` | Listar presupuestos por persona |
+| GET | `/api/budgets/{id}` | Obtener presupuesto por ID |
+| POST | `/api/budgets` | Crear o actualizar presupuesto |
+| PUT | `/api/budgets/{id}` | Actualizar presupuesto |
+| DELETE | `/api/budgets/{id}` | Eliminar presupuesto |
 
-## Timezone Handling
+### Fuentes de Dinero (`/api/money-sources`)
+| Método | Endpoint | Descripción |
+|--------|----------|-------------|
+| GET | `/api/money-sources?personName=...` | Listar fuentes de dinero |
+| GET | `/api/money-sources/{id}` | Obtener fuente por ID |
+| POST | `/api/money-sources` | Crear fuente de dinero |
+| PUT | `/api/money-sources/{id}` | Actualizar fuente de dinero |
+| DELETE | `/api/money-sources/{id}` | Eliminar fuente de dinero |
+| POST | `/api/money-sources/{id}/deposit` | Registrar depósito |
+| GET | `/api/money-sources/{id}/movements` | Historial de movimientos |
 
-Pass timezone via query param `?tz=America/Bogota` or header `X-Timezone`. Defaults to `America/Bogota`.
+## Configuración
+
+| Parámetro | Valor por defecto |
+|-----------|-------------------|
+| Puerto | `3002` |
+| Base de datos | `./gastos.db` (SQLite) |
+| Zona horaria | `America/Bogota` |
+| CORS | Todos los orígenes permitidos |
+
+## Zona horaria
+
+Se puede especificar la zona horaria por request con el query param `?tz=America/Bogota` o el header `X-Timezone`. Por defecto usa `America/Bogota`.
