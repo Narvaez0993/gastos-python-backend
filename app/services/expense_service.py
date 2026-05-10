@@ -4,11 +4,15 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
-from app.dao.expense_dao import ExpenseDAO
-from app.dao.money_source_dao import MoneySourceDAO
-from app.dao.money_source_movement_dao import MoneySourceMovementDAO
-from app.dao.person_dao import PersonDAO
-from app.utils.budget_check import check_budgets, get_period_range, parse_date_to_noon_utc
+from app.repositories.interfaces.budget_repository import IBudgetRepository
+from app.repositories.interfaces.expense_repository import IExpenseRepository
+from app.repositories.interfaces.money_source_movement_repository import (
+    IMoneySourceMovementRepository,
+)
+from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
+from app.repositories.interfaces.person_repository import IPersonRepository
+from app.utils.budget_check import check_budgets
+from app.utils.dates import get_period_range, parse_date_to_noon_utc
 
 
 def resolve_tz(tz_query: str | None, tz_header: str | None) -> str:
@@ -38,33 +42,45 @@ def _format_expense(row):
 
 
 class ExpenseService:
+    """Lógica de negocio para gastos. Inyecta cinco repositorios por interfaz."""
 
-    @staticmethod
-    def list_expenses(person_id=None, period=None, start_date=None,
+    def __init__(
+        self,
+        expense_repo: IExpenseRepository,
+        person_repo: IPersonRepository,
+        money_source_repo: IMoneySourceRepository,
+        movement_repo: IMoneySourceMovementRepository,
+        budget_repo: IBudgetRepository,
+    ):
+        self.expense_repo = expense_repo
+        self.person_repo = person_repo
+        self.money_source_repo = money_source_repo
+        self.movement_repo = movement_repo
+        self.budget_repo = budget_repo
+
+    def list_expenses(self, person_id=None, period=None, start_date=None,
                       end_date=None, tz="America/Bogota"):
         range_start, range_end = get_period_range(period, start_date, end_date, tz)
         start_str = range_start.isoformat() if range_start else None
         end_str = range_end.isoformat() if range_end else None
 
-        rows = ExpenseDAO.get_filtered(person_id, start_str, end_str)
+        rows = self.expense_repo.get_filtered(person_id, start_str, end_str)
         return [_format_expense(row) for row in rows]
 
-    @staticmethod
-    def get_expense(expense_id):
-        row = ExpenseDAO.get_by_id(expense_id)
+    def get_expense(self, expense_id):
+        row = self.expense_repo.get_by_id(expense_id)
         if not row:
             raise HTTPException(status_code=404, detail="Gasto no encontrado")
         return _format_expense(row)
 
-    @staticmethod
-    def create_expense(data, tz="America/Bogota"):
+    def create_expense(self, data, tz="America/Bogota"):
         if not data.person_id or not data.amount or not data.description or not data.date:
             raise HTTPException(
                 status_code=400,
                 detail="person_id, amount, description y date son requeridos",
             )
 
-        person = PersonDAO.get_by_id(data.person_id)
+        person = self.person_repo.get_by_id(data.person_id)
         if not person:
             raise HTTPException(
                 status_code=404,
@@ -73,7 +89,7 @@ class ExpenseService:
 
         source = None
         if data.money_source_id:
-            source = MoneySourceDAO.get_by_id(data.money_source_id)
+            source = self.money_source_repo.get_by_id(data.money_source_id)
             if not source or source["person_id"] != person["id"]:
                 raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
@@ -86,7 +102,7 @@ class ExpenseService:
         expense_date = parse_date_to_noon_utc(data.date)
         expense_date_str = expense_date.isoformat()
 
-        expense = ExpenseDAO.create(
+        expense = self.expense_repo.create(
             person_id=person["id"],
             amount=float(data.amount),
             description=data.description.strip(),
@@ -99,9 +115,9 @@ class ExpenseService:
         if source:
             balance_before = source["balance"]
             balance_after = balance_before - float(data.amount)
-            MoneySourceDAO.update_balance(source["id"], balance_after)
+            self.money_source_repo.update_balance(source["id"], balance_after)
 
-            MoneySourceMovementDAO.create(
+            self.movement_repo.create(
                 money_source_id=source["id"],
                 movement_type="expense",
                 amount=float(data.amount),
@@ -120,7 +136,9 @@ class ExpenseService:
             if balance_after < 0:
                 money_source_info["warning"] = "El balance quedó en negativo"
 
-        budget_alerts = check_budgets(person["id"], tz)
+        budget_alerts = check_budgets(
+            self.budget_repo, self.expense_repo, person["id"], tz
+        )
 
         return {
             "expense": {
@@ -137,16 +155,15 @@ class ExpenseService:
             "money_source": money_source_info,
         }
 
-    @staticmethod
-    def update_expense(expense_id, data):
-        existing = ExpenseDAO.get_by_id(expense_id)
+    def update_expense(self, expense_id, data):
+        existing = self.expense_repo.get_by_id(expense_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Gasto no encontrado")
 
         expense_date = parse_date_to_noon_utc(data.date)
         expense_date_str = expense_date.isoformat()
 
-        updated = ExpenseDAO.update(
+        updated = self.expense_repo.update(
             expense_id=expense_id,
             amount=float(data.amount),
             description=data.description.strip(),
@@ -160,20 +177,19 @@ class ExpenseService:
 
         return _format_expense(updated)
 
-    @staticmethod
-    def delete_expense(expense_id):
-        existing = ExpenseDAO.get_by_id(expense_id)
+    def delete_expense(self, expense_id):
+        existing = self.expense_repo.get_by_id(expense_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Gasto no encontrado")
 
         if existing["money_source_id"]:
-            source = MoneySourceDAO.get_by_id(existing["money_source_id"])
+            source = self.money_source_repo.get_by_id(existing["money_source_id"])
             if source:
                 balance_before = source["balance"]
                 balance_after = balance_before + existing["amount"]
-                MoneySourceDAO.update_balance(source["id"], balance_after)
+                self.money_source_repo.update_balance(source["id"], balance_after)
 
-                MoneySourceMovementDAO.create(
+                self.movement_repo.create(
                     money_source_id=source["id"],
                     movement_type="adjustment",
                     amount=existing["amount"],
@@ -183,14 +199,13 @@ class ExpenseService:
                     date=datetime.now(timezone.utc).isoformat(),
                 )
 
-        ExpenseDAO.delete(expense_id)
+        self.expense_repo.delete(expense_id)
         return {"message": "Gasto eliminado"}
 
-    @staticmethod
-    def get_summary(person_id=None, period=None, start_date=None,
+    def get_summary(self, person_id=None, period=None, start_date=None,
                     end_date=None, tz="America/Bogota"):
         range_start, range_end = get_period_range(period, start_date, end_date, tz)
         start_str = range_start.isoformat() if range_start else None
         end_str = range_end.isoformat() if range_end else None
 
-        return ExpenseDAO.get_summary(person_id, start_str, end_str)
+        return self.expense_repo.get_summary(person_id, start_str, end_str)

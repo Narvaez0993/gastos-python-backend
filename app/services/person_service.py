@@ -1,37 +1,36 @@
 from fastapi import HTTPException
-from sqlite3 import IntegrityError
 
-from app.dao.person_dao import PersonDAO
+from app.repositories.interfaces.person_repository import IPersonRepository
 
 
 class PersonService:
+    """Lógica de negocio para personas. Depende de IPersonRepository (no de implementación)."""
 
-    @staticmethod
-    def list_persons():
-        return PersonDAO.get_all()
+    def __init__(self, person_repo: IPersonRepository):
+        self.person_repo = person_repo
 
-    @staticmethod
-    def get_person(person_id):
-        person = PersonDAO.get_by_id(person_id)
+    def list_persons(self):
+        return self.person_repo.get_all()
+
+    def get_person(self, person_id):
+        person = self.person_repo.get_by_id(person_id)
         if not person:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
         return person
 
-    @staticmethod
-    def create_person(data):
+    def create_person(self, data):
         name = data.name.strip()
         if not name:
             raise HTTPException(status_code=400, detail="El nombre es requerido")
 
-        existing = PersonDAO.get_by_name(name)
+        existing = self.person_repo.get_by_name(name)
         if existing:
             raise HTTPException(status_code=409, detail="La persona ya existe")
 
-        return PersonDAO.create(name)
+        return self.person_repo.create(name)
 
-    @staticmethod
-    def update_person(person_id, data):
-        person = PersonDAO.get_by_id(person_id)
+    def update_person(self, person_id, data):
+        person = self.person_repo.get_by_id(person_id)
         if not person:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
 
@@ -39,19 +38,18 @@ class PersonService:
         if not name:
             raise HTTPException(status_code=400, detail="El nombre es requerido")
 
-        existing = PersonDAO.get_by_name(name)
+        existing = self.person_repo.get_by_name(name)
         if existing and existing["id"] != person_id:
             raise HTTPException(status_code=409, detail="Ya existe una persona con ese nombre")
 
-        return PersonDAO.update(person_id, name)
+        return self.person_repo.update(person_id, name)
 
-    @staticmethod
-    def delete_person(person_id):
-        person = PersonDAO.get_by_id(person_id)
+    def delete_person(self, person_id):
+        person = self.person_repo.get_by_id(person_id)
         if not person:
             raise HTTPException(status_code=404, detail="Persona no encontrada")
 
-        deleted = PersonDAO.delete(person_id)
+        deleted = self.person_repo.delete(person_id)
         if not deleted:
             raise HTTPException(
                 status_code=400,
