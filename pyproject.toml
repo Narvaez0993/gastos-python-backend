@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "gastos-python-backend"
+version = "1.1.0"
+description = "API REST para gestión de gastos personales con FastAPI, SQL crudo y SQLAlchemy ORM."
+requires-python = ">=3.9"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "unit: pruebas unitarias rápidas",
+]
+
+[tool.coverage.run]
+source = ["app"]
+omit = [
+    "app/main.py",
+    "app/__init__.py",
+    "app/*/__init__.py",
+    "app/db/__init__.py",
+    "app/routes/*",
+    "app/schemas/*",
+    "app/dependencies/*",
+]
