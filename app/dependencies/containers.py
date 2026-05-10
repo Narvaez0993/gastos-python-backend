@@ -7,7 +7,10 @@ functions vía Depends().
 """
 
 from fastapi import Depends
+from sqlalchemy.orm import Session
 
+from app.config.settings import get_settings
+from app.db.session import get_db
 from app.repositories.interfaces.budget_repository import IBudgetRepository
 from app.repositories.interfaces.expense_repository import IExpenseRepository
 from app.repositories.interfaces.money_source_movement_repository import (
@@ -15,6 +18,7 @@ from app.repositories.interfaces.money_source_movement_repository import (
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
 from app.repositories.interfaces.person_repository import IPersonRepository
+from app.repositories.jpa import MoneySourceJpaRepository, PersonJpaRepository
 from app.repositories.sql import (
     BudgetSqlRepository,
     ExpenseSqlRepository,
@@ -28,15 +32,20 @@ from app.services.money_source_service import MoneySourceService
 from app.services.person_service import PersonService
 
 # ---- Repositorios ----
-# Persons y MoneySources tienen dos backends seleccionables (SQL o JPA).
-# El backend JPA aún no existe (se agrega en el commit 6); por ahora todo cae a SQL.
+# Persons y MoneySources tienen dos backends seleccionables (SQL crudo o JPA / SQLAlchemy ORM).
+# Expenses, Budgets y Movements usan solo SQL crudo, pero igual dependen de su interfaz para
+# que los services no estén acoplados a la implementación concreta (DIP).
 
 
-def get_person_repo() -> IPersonRepository:
+def get_person_repo(db: Session = Depends(get_db)) -> IPersonRepository:
+    if get_settings().PERSON_REPO_BACKEND == "jpa":
+        return PersonJpaRepository(db)
     return PersonSqlRepository()
 
 
-def get_money_source_repo() -> IMoneySourceRepository:
+def get_money_source_repo(db: Session = Depends(get_db)) -> IMoneySourceRepository:
+    if get_settings().MONEY_SOURCE_REPO_BACKEND == "jpa":
+        return MoneySourceJpaRepository(db)
     return MoneySourceSqlRepository()
 
 
