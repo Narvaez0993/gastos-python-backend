@@ -4,9 +4,11 @@ from datetime import datetime, timezone
 
 from fastapi import HTTPException
 
-from app.dao.money_source_dao import MoneySourceDAO
-from app.dao.money_source_movement_dao import MoneySourceMovementDAO
-from app.dao.person_dao import PersonDAO
+from app.repositories.interfaces.money_source_movement_repository import (
+    IMoneySourceMovementRepository,
+)
+from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
+from app.repositories.interfaces.person_repository import IPersonRepository
 
 
 def _format_movement(row):
@@ -34,31 +36,38 @@ def _format_movement(row):
 
 
 class MoneySourceService:
+    """Lógica de negocio para fuentes de dinero. Inyecta repositorios por interfaz."""
 
-    @staticmethod
-    def list_money_sources(person_id):
+    def __init__(
+        self,
+        money_source_repo: IMoneySourceRepository,
+        person_repo: IPersonRepository,
+        movement_repo: IMoneySourceMovementRepository,
+    ):
+        self.money_source_repo = money_source_repo
+        self.person_repo = person_repo
+        self.movement_repo = movement_repo
+
+    def list_money_sources(self, person_id):
         if not person_id:
             raise HTTPException(
                 status_code=400, detail="El parámetro personId es requerido"
             )
+        return self.money_source_repo.get_by_person(person_id)
 
-        return MoneySourceDAO.get_by_person(person_id)
-
-    @staticmethod
-    def get_money_source(source_id):
-        source = MoneySourceDAO.get_by_id(source_id)
+    def get_money_source(self, source_id):
+        source = self.money_source_repo.get_by_id(source_id)
         if not source:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
         return source
 
-    @staticmethod
-    def create_money_source(data):
+    def create_money_source(self, data):
         if not data.person_id or not data.name:
             raise HTTPException(
                 status_code=400, detail="person_id y name son requeridos"
             )
 
-        person = PersonDAO.get_by_id(data.person_id)
+        person = self.person_repo.get_by_id(data.person_id)
         if not person:
             raise HTTPException(
                 status_code=404,
@@ -68,18 +77,18 @@ class MoneySourceService:
         name = data.name.strip()
         name_normalized = name.lower().strip()
 
-        if MoneySourceDAO.check_duplicate_name(data.person_id, name_normalized):
+        if self.money_source_repo.check_duplicate_name(data.person_id, name_normalized):
             raise HTTPException(
                 status_code=409,
                 detail=f'Ya tienes una fuente de dinero llamada "{data.name}"',
             )
 
-        source = MoneySourceDAO.create(
+        source = self.money_source_repo.create(
             data.person_id, name, name_normalized, data.balance
         )
 
         if data.balance and data.balance != 0:
-            MoneySourceMovementDAO.create(
+            self.movement_repo.create(
                 money_source_id=source["id"],
                 movement_type="adjustment",
                 amount=abs(data.balance),
@@ -91,18 +100,17 @@ class MoneySourceService:
 
         return source
 
-    @staticmethod
-    def update_money_source(source_id, data):
-        source = MoneySourceDAO.get_by_id(source_id)
+    def update_money_source(self, source_id, data):
+        source = self.money_source_repo.get_by_id(source_id)
         if not source:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         if data.balance is not None and data.balance != source["balance"]:
             balance_before = source["balance"]
             balance_after = data.balance
-            MoneySourceDAO.update_balance(source_id, balance_after)
+            self.money_source_repo.update_balance(source_id, balance_after)
 
-            MoneySourceMovementDAO.create(
+            self.movement_repo.create(
                 money_source_id=source_id,
                 movement_type="adjustment",
                 amount=abs(balance_after - balance_before),
@@ -115,7 +123,7 @@ class MoneySourceService:
         if data.name is not None:
             new_name = data.name.strip()
             new_normalized = new_name.lower().strip()
-            if MoneySourceDAO.check_duplicate_name(
+            if self.money_source_repo.check_duplicate_name(
                 source["person_id"], new_normalized, exclude_id=source_id
             ):
                 raise HTTPException(
@@ -123,7 +131,7 @@ class MoneySourceService:
                     detail="Ya tienes una fuente de dinero con ese nombre",
                 )
 
-        updated = MoneySourceDAO.update(
+        updated = self.money_source_repo.update(
             source_id,
             name=data.name.strip() if data.name is not None else None,
             name_normalized=data.name.strip().lower() if data.name is not None else None,
@@ -132,29 +140,27 @@ class MoneySourceService:
         )
         return updated
 
-    @staticmethod
-    def delete_money_source(source_id):
-        source = MoneySourceDAO.get_by_id(source_id)
+    def delete_money_source(self, source_id):
+        source = self.money_source_repo.get_by_id(source_id)
         if not source:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
-        if MoneySourceMovementDAO.has_movements(source_id):
+        if self.movement_repo.has_movements(source_id):
             raise HTTPException(
                 status_code=400,
                 detail="No se puede eliminar una fuente de dinero con movimientos. Deshabilítala en su lugar.",
             )
 
-        MoneySourceDAO.delete(source_id)
+        self.money_source_repo.delete(source_id)
         return {"message": "Fuente de dinero eliminada"}
 
-    @staticmethod
-    def deposit(source_id, data):
+    def deposit(self, source_id, data):
         if not data.amount or data.amount <= 0:
             raise HTTPException(
                 status_code=400, detail="Se requiere un monto positivo"
             )
 
-        source = MoneySourceDAO.get_by_id(source_id)
+        source = self.money_source_repo.get_by_id(source_id)
         if not source:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
@@ -166,7 +172,7 @@ class MoneySourceService:
 
         balance_before = source["balance"]
         balance_after = balance_before + data.amount
-        MoneySourceDAO.update_balance(source_id, balance_after)
+        self.money_source_repo.update_balance(source_id, balance_after)
 
         deposit_date = datetime.now(timezone.utc).isoformat()
         if data.date:
@@ -178,7 +184,7 @@ class MoneySourceService:
             except ValueError:
                 deposit_date = datetime.now(timezone.utc).isoformat()
 
-        movement = MoneySourceMovementDAO.create(
+        movement = self.movement_repo.create(
             money_source_id=source_id,
             movement_type="deposit",
             amount=data.amount,
@@ -188,17 +194,18 @@ class MoneySourceService:
             date=deposit_date,
         )
 
-        updated_source = MoneySourceDAO.get_by_id(source_id)
+        updated_source = self.money_source_repo.get_by_id(source_id)
 
         return {
             "movement": _format_movement(movement),
             "source": updated_source,
         }
 
-    @staticmethod
-    def get_movements(source_id, movement_type=None, start_date=None,
-                      end_date=None, page=1, limit=20):
-        source = MoneySourceDAO.get_by_id(source_id)
+    def get_movements(
+        self, source_id, movement_type=None, start_date=None,
+        end_date=None, page=1, limit=20,
+    ):
+        source = self.money_source_repo.get_by_id(source_id)
         if not source:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
@@ -221,7 +228,7 @@ class MoneySourceService:
             except ValueError:
                 pass
 
-        result = MoneySourceMovementDAO.get_filtered(
+        result = self.movement_repo.get_filtered(
             source_id, movement_type, sd, ed, page, limit
         )
 
