@@ -9,7 +9,8 @@ class BudgetDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT b.*, p.name as person_name
+                SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
+                       p.name as person_name
                 FROM budgets b
                 JOIN persons p ON b.person_id = p.id
                 ORDER BY b.id
@@ -24,7 +25,8 @@ class BudgetDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT b.*, p.name as person_name
+                SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
+                       p.name as person_name
                 FROM budgets b
                 JOIN persons p ON b.person_id = p.id
                 WHERE b.id = ?
@@ -40,7 +42,8 @@ class BudgetDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT b.*, p.name as person_name
+                SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
+                       p.name as person_name
                 FROM budgets b
                 JOIN persons p ON b.person_id = p.id
                 WHERE b.person_id = ?
@@ -55,7 +58,8 @@ class BudgetDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT b.*, p.name as person_name
+                SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
+                       p.name as person_name
                 FROM budgets b
                 JOIN persons p ON b.person_id = p.id
                 WHERE b.person_id = ? AND b.type = ?
@@ -71,7 +75,8 @@ class BudgetDAO:
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT * FROM budgets WHERE person_id = ? AND enabled = 1",
+                "SELECT id, person_id, type, amount, enabled, created_at "
+                "FROM budgets WHERE person_id = ? AND enabled = 1",
                 (person_id,),
             )
             return [dict(row) for row in cursor.fetchall()]
@@ -90,7 +95,8 @@ class BudgetDAO:
             conn.commit()
             new_id = cursor.lastrowid
             cursor.execute("""
-                SELECT b.*, p.name as person_name
+                SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
+                       p.name as person_name
                 FROM budgets b
                 JOIN persons p ON b.person_id = p.id
                 WHERE b.id = ?
@@ -129,7 +135,8 @@ class BudgetDAO:
             if cursor.rowcount == 0:
                 return None
             cursor.execute("""
-                SELECT b.*, p.name as person_name
+                SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
+                       p.name as person_name
                 FROM budgets b
                 JOIN persons p ON b.person_id = p.id
                 WHERE b.id = ?

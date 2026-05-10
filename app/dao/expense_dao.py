@@ -9,7 +9,9 @@ class ExpenseDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT e.*, p.name as person_name,
+                SELECT e.id, e.person_id, e.amount, e.description, e.category,
+                       e.date, e.money_source_id, e.created_at,
+                       p.name as person_name,
                        ms.id as ms_id, ms.name as ms_name,
                        ms.balance as ms_balance, ms.enabled as ms_enabled
                 FROM expenses e
@@ -27,7 +29,9 @@ class ExpenseDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT e.*, p.name as person_name,
+                SELECT e.id, e.person_id, e.amount, e.description, e.category,
+                       e.date, e.money_source_id, e.created_at,
+                       p.name as person_name,
                        ms.id as ms_id, ms.name as ms_name,
                        ms.balance as ms_balance, ms.enabled as ms_enabled
                 FROM expenses e
@@ -52,7 +56,9 @@ class ExpenseDAO:
             conn.commit()
             new_id = cursor.lastrowid
             cursor.execute("""
-                SELECT e.*, p.name as person_name,
+                SELECT e.id, e.person_id, e.amount, e.description, e.category,
+                       e.date, e.money_source_id, e.created_at,
+                       p.name as person_name,
                        ms.id as ms_id, ms.name as ms_name,
                        ms.balance as ms_balance, ms.enabled as ms_enabled
                 FROM expenses e
@@ -78,7 +84,9 @@ class ExpenseDAO:
             if cursor.rowcount == 0:
                 return None
             cursor.execute("""
-                SELECT e.*, p.name as person_name,
+                SELECT e.id, e.person_id, e.amount, e.description, e.category,
+                       e.date, e.money_source_id, e.created_at,
+                       p.name as person_name,
                        ms.id as ms_id, ms.name as ms_name,
                        ms.balance as ms_balance, ms.enabled as ms_enabled
                 FROM expenses e
@@ -107,7 +115,9 @@ class ExpenseDAO:
         try:
             cursor = conn.cursor()
             query = """
-                SELECT e.*, p.name as person_name,
+                SELECT e.id, e.person_id, e.amount, e.description, e.category,
+                       e.date, e.money_source_id, e.created_at,
+                       p.name as person_name,
                        ms.id as ms_id, ms.name as ms_name,
                        ms.balance as ms_balance, ms.enabled as ms_enabled
                 FROM expenses e

@@ -8,7 +8,10 @@ class MoneySourceDAO:
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM money_sources ORDER BY enabled DESC, name ASC")
+            cursor.execute(
+                "SELECT id, person_id, name, name_normalized, balance, enabled, created_at "
+                "FROM money_sources ORDER BY enabled DESC, name ASC"
+            )
             return [dict(row) for row in cursor.fetchall()]
         finally:
             close_connection(conn)
@@ -18,7 +21,11 @@ class MoneySourceDAO:
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM money_sources WHERE id = ?", (source_id,))
+            cursor.execute(
+                "SELECT id, person_id, name, name_normalized, balance, enabled, created_at "
+                "FROM money_sources WHERE id = ?",
+                (source_id,),
+            )
             row = cursor.fetchone()
             return dict(row) if row else None
         finally:
@@ -30,7 +37,8 @@ class MoneySourceDAO:
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT * FROM money_sources WHERE person_id = ? ORDER BY enabled DESC, name ASC",
+                "SELECT id, person_id, name, name_normalized, balance, enabled, created_at "
+                "FROM money_sources WHERE person_id = ? ORDER BY enabled DESC, name ASC",
                 (person_id,),
             )
             return [dict(row) for row in cursor.fetchall()]
@@ -43,7 +51,8 @@ class MoneySourceDAO:
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT * FROM money_sources WHERE person_id = ? AND name_normalized = ?",
+                "SELECT id, person_id, name, name_normalized, balance, enabled, created_at "
+                "FROM money_sources WHERE person_id = ? AND name_normalized = ?",
                 (person_id, name_normalized),
             )
             row = cursor.fetchone()
@@ -62,7 +71,11 @@ class MoneySourceDAO:
             """, (person_id, name, name_normalized, balance))
             conn.commit()
             new_id = cursor.lastrowid
-            cursor.execute("SELECT * FROM money_sources WHERE id = ?", (new_id,))
+            cursor.execute(
+                "SELECT id, person_id, name, name_normalized, balance, enabled, created_at "
+                "FROM money_sources WHERE id = ?",
+                (new_id,),
+            )
             return dict(cursor.fetchone())
         finally:
             close_connection(conn)
@@ -99,7 +112,11 @@ class MoneySourceDAO:
             conn.commit()
             if cursor.rowcount == 0:
                 return None
-            cursor.execute("SELECT * FROM money_sources WHERE id = ?", (source_id,))
+            cursor.execute(
+                "SELECT id, person_id, name, name_normalized, balance, enabled, created_at "
+                "FROM money_sources WHERE id = ?",
+                (source_id,),
+            )
             return dict(cursor.fetchone())
         finally:
             close_connection(conn)

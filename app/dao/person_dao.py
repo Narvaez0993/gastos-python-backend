@@ -10,7 +10,7 @@ class PersonDAO:
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM persons ORDER BY name ASC")
+            cursor.execute("SELECT id, name, created_at FROM persons ORDER BY name ASC")
             return [dict(row) for row in cursor.fetchall()]
         finally:
             close_connection(conn)
@@ -20,7 +20,7 @@ class PersonDAO:
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM persons WHERE id = ?", (person_id,))
+            cursor.execute("SELECT id, name, created_at FROM persons WHERE id = ?", (person_id,))
             row = cursor.fetchone()
             return dict(row) if row else None
         finally:
@@ -31,7 +31,7 @@ class PersonDAO:
         conn = get_connection()
         try:
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM persons WHERE name = ?", (name,))
+            cursor.execute("SELECT id, name, created_at FROM persons WHERE name = ?", (name,))
             row = cursor.fetchone()
             return dict(row) if row else None
         finally:
@@ -45,7 +45,7 @@ class PersonDAO:
             cursor.execute("INSERT INTO persons (name) VALUES (?)", (name,))
             conn.commit()
             new_id = cursor.lastrowid
-            cursor.execute("SELECT * FROM persons WHERE id = ?", (new_id,))
+            cursor.execute("SELECT id, name, created_at FROM persons WHERE id = ?", (new_id,))
             return dict(cursor.fetchone())
         finally:
             close_connection(conn)
@@ -62,7 +62,7 @@ class PersonDAO:
             conn.commit()
             if cursor.rowcount == 0:
                 return None
-            cursor.execute("SELECT * FROM persons WHERE id = ?", (person_id,))
+            cursor.execute("SELECT id, name, created_at FROM persons WHERE id = ?", (person_id,))
             return dict(cursor.fetchone())
         finally:
             close_connection(conn)
