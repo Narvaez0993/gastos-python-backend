@@ -1,12 +1,11 @@
 import sqlite3
-import os
 
-DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "gastos.db")
+from app.config.settings import get_settings
 
 
 def get_connection():
     """Abre una nueva conexión a la base de datos SQLite de manera manual."""
-    conn = sqlite3.connect(DATABASE_PATH)
+    conn = sqlite3.connect(get_settings().get_database_absolute_path())
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
