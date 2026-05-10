@@ -1,11 +1,13 @@
 import sqlite3
+from typing import Optional
 
 from app.config.settings import get_settings
 
 
-def get_connection():
-    """Abre una nueva conexión a la base de datos SQLite de manera manual."""
-    conn = sqlite3.connect(get_settings().get_database_absolute_path())
+def get_connection(db_path: Optional[str] = None):
+    """Abre una nueva conexión a SQLite. Si no se da db_path se usa la BD configurada."""
+    path = db_path if db_path is not None else get_settings().get_database_absolute_path()
+    conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
