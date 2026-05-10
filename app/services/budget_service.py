@@ -1,7 +1,7 @@
 from fastapi import HTTPException
 
-from app.dao.budget_dao import BudgetDAO
-from app.dao.person_dao import PersonDAO
+from app.repositories.interfaces.budget_repository import IBudgetRepository
+from app.repositories.interfaces.person_repository import IPersonRepository
 
 
 def _format_budget(row):
@@ -17,26 +17,32 @@ def _format_budget(row):
 
 
 class BudgetService:
+    """Lógica de negocio para presupuestos. Depende de IBudgetRepository e IPersonRepository."""
 
-    @staticmethod
-    def list_budgets(person_id):
+    def __init__(
+        self,
+        budget_repo: IBudgetRepository,
+        person_repo: IPersonRepository,
+    ):
+        self.budget_repo = budget_repo
+        self.person_repo = person_repo
+
+    def list_budgets(self, person_id):
         if not person_id:
             raise HTTPException(
                 status_code=400, detail="El parámetro personId es requerido"
             )
 
-        rows = BudgetDAO.get_by_person(person_id)
+        rows = self.budget_repo.get_by_person(person_id)
         return [_format_budget(row) for row in rows]
 
-    @staticmethod
-    def get_budget(budget_id):
-        row = BudgetDAO.get_by_id(budget_id)
+    def get_budget(self, budget_id):
+        row = self.budget_repo.get_by_id(budget_id)
         if not row:
             raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
         return _format_budget(row)
 
-    @staticmethod
-    def create_or_update_budget(data):
+    def create_or_update_budget(self, data):
         if not data.person_id or not data.type or not data.amount:
             raise HTTPException(
                 status_code=400,
@@ -49,17 +55,17 @@ class BudgetService:
                 detail="type debe ser daily, weekly o monthly",
             )
 
-        person = PersonDAO.get_by_id(data.person_id)
+        person = self.person_repo.get_by_id(data.person_id)
         if not person:
             raise HTTPException(
                 status_code=404,
                 detail=f"Persona con id {data.person_id} no encontrada",
             )
 
-        existing = BudgetDAO.get_by_person_and_type(data.person_id, data.type)
+        existing = self.budget_repo.get_by_person_and_type(data.person_id, data.type)
 
         if existing:
-            updated = BudgetDAO.update(existing["id"], amount=data.amount, enabled=True)
+            updated = self.budget_repo.update(existing["id"], amount=data.amount, enabled=True)
             return {
                 "id": updated["id"],
                 "person_id": updated["person_id"],
@@ -69,7 +75,7 @@ class BudgetService:
                 "created_at": updated["created_at"],
             }
 
-        created = BudgetDAO.create(data.person_id, data.type, data.amount)
+        created = self.budget_repo.create(data.person_id, data.type, data.amount)
         return {
             "id": created["id"],
             "person_id": created["person_id"],
@@ -79,9 +85,8 @@ class BudgetService:
             "created_at": created["created_at"],
         }
 
-    @staticmethod
-    def update_budget(budget_id, data):
-        existing = BudgetDAO.get_by_id(budget_id)
+    def update_budget(self, budget_id, data):
+        existing = self.budget_repo.get_by_id(budget_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
 
@@ -91,7 +96,7 @@ class BudgetService:
                 detail="type debe ser daily, weekly o monthly",
             )
 
-        updated = BudgetDAO.update(
+        updated = self.budget_repo.update(
             budget_id,
             amount=data.amount,
             enabled=data.enabled,
@@ -103,11 +108,10 @@ class BudgetService:
 
         return _format_budget(updated)
 
-    @staticmethod
-    def delete_budget(budget_id):
-        existing = BudgetDAO.get_by_id(budget_id)
+    def delete_budget(self, budget_id):
+        existing = self.budget_repo.get_by_id(budget_id)
         if not existing:
             raise HTTPException(status_code=404, detail="Presupuesto no encontrado")
 
-        BudgetDAO.delete(budget_id)
+        self.budget_repo.delete(budget_id)
         return {"message": "Presupuesto eliminado"}
