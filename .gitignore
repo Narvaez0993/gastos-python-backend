@@ -7,7 +7,8 @@ build/
 .claude/
 .eggs/
 *.egg
-.env
+.env*
+!.env.example
 .venv/
 venv/
 gastos.db
@@ -16,3 +17,4 @@ uploads/*
 alembic/versions/*.py
 !alembic/versions/.gitkeep
 .DS_Store
+bruno-collection/
