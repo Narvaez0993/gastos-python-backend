@@ -11,7 +11,10 @@ class MoneySourceMovementDAO:
         try:
             cursor = conn.cursor()
             cursor.execute("""
-                SELECT m.*, e.description as expense_description,
+                SELECT m.id, m.money_source_id, m.type, m.amount,
+                       m.balance_before, m.balance_after, m.expense_id,
+                       m.note, m.date, m.created_at,
+                       e.description as expense_description,
                        e.amount as expense_amount, e.category as expense_category
                 FROM money_source_movements m
                 LEFT JOIN expenses e ON m.expense_id = e.id
@@ -38,7 +41,10 @@ class MoneySourceMovementDAO:
             conn.commit()
             new_id = cursor.lastrowid
             cursor.execute("""
-                SELECT m.*, e.description as expense_description,
+                SELECT m.id, m.money_source_id, m.type, m.amount,
+                       m.balance_before, m.balance_after, m.expense_id,
+                       m.note, m.date, m.created_at,
+                       e.description as expense_description,
                        e.amount as expense_amount, e.category as expense_category
                 FROM money_source_movements m
                 LEFT JOIN expenses e ON m.expense_id = e.id
@@ -94,7 +100,10 @@ class MoneySourceMovementDAO:
 
             offset = (page - 1) * limit
             cursor.execute(f"""
-                SELECT m.*, e.description as expense_description,
+                SELECT m.id, m.money_source_id, m.type, m.amount,
+                       m.balance_before, m.balance_after, m.expense_id,
+                       m.note, m.date, m.created_at,
+                       e.description as expense_description,
                        e.amount as expense_amount, e.category as expense_category
                 FROM money_source_movements m
                 LEFT JOIN expenses e ON m.expense_id = e.id
