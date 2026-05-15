@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "gastos-python-backend"
-version = "1.1.0"
-description = "API REST para gestión de gastos personales con FastAPI, SQL crudo y SQLAlchemy ORM."
+version = "2.0.0"
+description = "API REST para gestión de gastos personales con FastAPI, SQL crudo, SQLAlchemy ORM y autenticación JWT."
 requires-python = ">=3.9"
 
 [tool.pytest.ini_options]

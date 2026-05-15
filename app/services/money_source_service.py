@@ -8,7 +8,6 @@ from app.repositories.interfaces.money_source_movement_repository import (
     IMoneySourceMovementRepository,
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
-from app.repositories.interfaces.person_repository import IPersonRepository
 
 
 def _format_movement(row):
@@ -36,55 +35,40 @@ def _format_movement(row):
 
 
 class MoneySourceService:
-    """Lógica de negocio para fuentes de dinero. Inyecta repositorios por interfaz."""
+    """Lógica de negocio para fuentes de dinero. El user_id viene del JWT."""
 
     def __init__(
         self,
         money_source_repo: IMoneySourceRepository,
-        person_repo: IPersonRepository,
         movement_repo: IMoneySourceMovementRepository,
     ):
         self.money_source_repo = money_source_repo
-        self.person_repo = person_repo
         self.movement_repo = movement_repo
 
-    def list_money_sources(self, person_id):
-        if not person_id:
-            raise HTTPException(
-                status_code=400, detail="El parámetro personId es requerido"
-            )
-        return self.money_source_repo.get_by_person(person_id)
+    def list_money_sources(self, user_id):
+        return self.money_source_repo.get_by_user(user_id)
 
-    def get_money_source(self, source_id):
+    def get_money_source(self, source_id, user_id):
         source = self.money_source_repo.get_by_id(source_id)
-        if not source:
+        if not source or source["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
         return source
 
-    def create_money_source(self, data):
-        if not data.person_id or not data.name:
-            raise HTTPException(
-                status_code=400, detail="person_id y name son requeridos"
-            )
-
-        person = self.person_repo.get_by_id(data.person_id)
-        if not person:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Persona con id {data.person_id} no encontrada",
-            )
+    def create_money_source(self, user_id, data):
+        if not data.name:
+            raise HTTPException(status_code=400, detail="name es requerido")
 
         name = data.name.strip()
         name_normalized = name.lower().strip()
 
-        if self.money_source_repo.check_duplicate_name(data.person_id, name_normalized):
+        if self.money_source_repo.check_duplicate_name(user_id, name_normalized):
             raise HTTPException(
                 status_code=409,
                 detail=f'Ya tienes una fuente de dinero llamada "{data.name}"',
             )
 
         source = self.money_source_repo.create(
-            data.person_id, name, name_normalized, data.balance
+            user_id, name, name_normalized, data.balance
         )
 
         if data.balance and data.balance != 0:
@@ -100,9 +84,9 @@ class MoneySourceService:
 
         return source
 
-    def update_money_source(self, source_id, data):
+    def update_money_source(self, source_id, user_id, data):
         source = self.money_source_repo.get_by_id(source_id)
-        if not source:
+        if not source or source["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         if data.balance is not None and data.balance != source["balance"]:
@@ -124,7 +108,7 @@ class MoneySourceService:
             new_name = data.name.strip()
             new_normalized = new_name.lower().strip()
             if self.money_source_repo.check_duplicate_name(
-                source["person_id"], new_normalized, exclude_id=source_id
+                user_id, new_normalized, exclude_id=source_id
             ):
                 raise HTTPException(
                     status_code=409,
@@ -140,9 +124,9 @@ class MoneySourceService:
         )
         return updated
 
-    def delete_money_source(self, source_id):
+    def delete_money_source(self, source_id, user_id):
         source = self.money_source_repo.get_by_id(source_id)
-        if not source:
+        if not source or source["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         if self.movement_repo.has_movements(source_id):
@@ -154,14 +138,14 @@ class MoneySourceService:
         self.money_source_repo.delete(source_id)
         return {"message": "Fuente de dinero eliminada"}
 
-    def deposit(self, source_id, data):
+    def deposit(self, source_id, user_id, data):
         if not data.amount or data.amount <= 0:
             raise HTTPException(
                 status_code=400, detail="Se requiere un monto positivo"
             )
 
         source = self.money_source_repo.get_by_id(source_id)
-        if not source:
+        if not source or source["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         if not source["enabled"]:
@@ -202,11 +186,11 @@ class MoneySourceService:
         }
 
     def get_movements(
-        self, source_id, movement_type=None, start_date=None,
+        self, source_id, user_id, movement_type=None, start_date=None,
         end_date=None, page=1, limit=20,
     ):
         source = self.money_source_repo.get_by_id(source_id)
-        if not source:
+        if not source or source["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         sd = None

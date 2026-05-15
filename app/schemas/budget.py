@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 
 class BudgetCreate(BaseModel):
-    person_id: int
     type: str
     amount: float
 
@@ -17,14 +16,14 @@ class BudgetUpdate(BaseModel):
     enabled: Optional[bool] = None
 
 
-class BudgetPersonOut(BaseModel):
+class BudgetUserOut(BaseModel):
     id: int
     name: str
 
 
 class BudgetOut(BaseModel):
     id: int
-    person: BudgetPersonOut
+    user: BudgetUserOut
     type: str
     amount: float
     enabled: bool
@@ -33,7 +32,7 @@ class BudgetOut(BaseModel):
 
 class BudgetCreatedOut(BaseModel):
     id: int
-    person_id: int
+    user_id: int
     type: str
     amount: float
     enabled: bool

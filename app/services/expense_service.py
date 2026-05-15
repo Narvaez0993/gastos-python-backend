@@ -10,7 +10,7 @@ from app.repositories.interfaces.money_source_movement_repository import (
     IMoneySourceMovementRepository,
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
-from app.repositories.interfaces.person_repository import IPersonRepository
+from app.repositories.sql.attachment_sql_repository import AttachmentSqlRepository
 from app.utils.budget_check import check_budgets
 from app.utils.dates import get_period_range, parse_date_to_noon_utc
 
@@ -31,7 +31,7 @@ def _format_expense(row):
         }
     return {
         "id": row["id"],
-        "person": {"id": row["person_id"], "name": row["person_name"]},
+        "user": {"id": row["user_id"], "name": row["user_name"]},
         "amount": row["amount"],
         "description": row["description"],
         "category": row["category"],
@@ -42,55 +42,49 @@ def _format_expense(row):
 
 
 class ExpenseService:
-    """Lógica de negocio para gastos. Inyecta cinco repositorios por interfaz."""
+    """Lógica de negocio para gastos. El user_id se inyecta desde la capa de routes
+    (derivado del JWT vía `get_current_user`), no se valida acá: se confía en el dependency."""
 
     def __init__(
         self,
         expense_repo: IExpenseRepository,
-        person_repo: IPersonRepository,
         money_source_repo: IMoneySourceRepository,
         movement_repo: IMoneySourceMovementRepository,
         budget_repo: IBudgetRepository,
+        attachment_repo: AttachmentSqlRepository | None = None,
     ):
         self.expense_repo = expense_repo
-        self.person_repo = person_repo
         self.money_source_repo = money_source_repo
         self.movement_repo = movement_repo
         self.budget_repo = budget_repo
+        self.attachment_repo = attachment_repo
 
-    def list_expenses(self, person_id=None, period=None, start_date=None,
+    def list_expenses(self, user_id, period=None, start_date=None,
                       end_date=None, tz="America/Bogota"):
         range_start, range_end = get_period_range(period, start_date, end_date, tz)
         start_str = range_start.isoformat() if range_start else None
         end_str = range_end.isoformat() if range_end else None
 
-        rows = self.expense_repo.get_filtered(person_id, start_str, end_str)
+        rows = self.expense_repo.get_filtered(user_id, start_str, end_str)
         return [_format_expense(row) for row in rows]
 
-    def get_expense(self, expense_id):
+    def get_expense(self, expense_id, user_id):
         row = self.expense_repo.get_by_id(expense_id)
-        if not row:
+        if not row or row["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Gasto no encontrado")
         return _format_expense(row)
 
-    def create_expense(self, data, tz="America/Bogota"):
-        if not data.person_id or not data.amount or not data.description or not data.date:
+    def create_expense(self, user_id, data, tz="America/Bogota"):
+        if not data.amount or not data.description or not data.date:
             raise HTTPException(
                 status_code=400,
-                detail="person_id, amount, description y date son requeridos",
-            )
-
-        person = self.person_repo.get_by_id(data.person_id)
-        if not person:
-            raise HTTPException(
-                status_code=404,
-                detail=f"Persona con id {data.person_id} no encontrada",
+                detail="amount, description y date son requeridos",
             )
 
         source = None
         if data.money_source_id:
             source = self.money_source_repo.get_by_id(data.money_source_id)
-            if not source or source["person_id"] != person["id"]:
+            if not source or source["user_id"] != user_id:
                 raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         if source and not source["enabled"]:
@@ -103,7 +97,7 @@ class ExpenseService:
         expense_date_str = expense_date.isoformat()
 
         expense = self.expense_repo.create(
-            person_id=person["id"],
+            user_id=user_id,
             amount=float(data.amount),
             description=data.description.strip(),
             category=data.category.strip() if data.category else None,
@@ -136,14 +130,20 @@ class ExpenseService:
             if balance_after < 0:
                 money_source_info["warning"] = "El balance quedó en negativo"
 
+        if data.attachment_ids and self.attachment_repo is not None:
+            for att_id in data.attachment_ids:
+                att = self.attachment_repo.get_by_id(att_id)
+                if att and att["user_id"] == user_id and att["expense_id"] is None:
+                    self.attachment_repo.link_to_expense(att_id, expense["id"])
+
         budget_alerts = check_budgets(
-            self.budget_repo, self.expense_repo, person["id"], tz
+            self.budget_repo, self.expense_repo, user_id, tz
         )
 
         return {
             "expense": {
                 "id": expense["id"],
-                "person_id": expense["person_id"],
+                "user_id": expense["user_id"],
                 "amount": expense["amount"],
                 "description": expense["description"],
                 "category": expense["category"],
@@ -155,10 +155,15 @@ class ExpenseService:
             "money_source": money_source_info,
         }
 
-    def update_expense(self, expense_id, data):
+    def update_expense(self, expense_id, user_id, data):
         existing = self.expense_repo.get_by_id(expense_id)
-        if not existing:
+        if not existing or existing["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Gasto no encontrado")
+
+        if data.money_source_id is not None:
+            source = self.money_source_repo.get_by_id(data.money_source_id)
+            if not source or source["user_id"] != user_id:
+                raise HTTPException(status_code=404, detail="Fuente de dinero no encontrada")
 
         expense_date = parse_date_to_noon_utc(data.date)
         expense_date_str = expense_date.isoformat()
@@ -177,9 +182,9 @@ class ExpenseService:
 
         return _format_expense(updated)
 
-    def delete_expense(self, expense_id):
+    def delete_expense(self, expense_id, user_id):
         existing = self.expense_repo.get_by_id(expense_id)
-        if not existing:
+        if not existing or existing["user_id"] != user_id:
             raise HTTPException(status_code=404, detail="Gasto no encontrado")
 
         if existing["money_source_id"]:
@@ -202,10 +207,10 @@ class ExpenseService:
         self.expense_repo.delete(expense_id)
         return {"message": "Gasto eliminado"}
 
-    def get_summary(self, person_id=None, period=None, start_date=None,
+    def get_summary(self, user_id, period=None, start_date=None,
                     end_date=None, tz="America/Bogota"):
         range_start, range_end = get_period_range(period, start_date, end_date, tz)
         start_str = range_start.isoformat() if range_start else None
         end_str = range_end.isoformat() if range_end else None
 
-        return self.expense_repo.get_summary(person_id, start_str, end_str)
+        return self.expense_repo.get_summary(user_id, start_str, end_str)

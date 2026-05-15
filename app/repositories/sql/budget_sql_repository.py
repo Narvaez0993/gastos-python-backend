@@ -6,10 +6,10 @@ from app.database import close_connection, get_connection
 from app.repositories.interfaces.budget_repository import IBudgetRepository
 
 _BASE_SELECT = """
-    SELECT b.id, b.person_id, b.type, b.amount, b.enabled, b.created_at,
-           p.name as person_name
+    SELECT b.id, b.user_id, b.type, b.amount, b.enabled, b.created_at,
+           u.name as user_name
     FROM budgets b
-    JOIN persons p ON b.person_id = p.id
+    JOIN users u ON b.user_id = u.id
 """
 
 
@@ -41,50 +41,50 @@ class BudgetSqlRepository(IBudgetRepository):
         finally:
             close_connection(conn)
 
-    def get_by_person(self, person_id: int) -> list[dict]:
+    def get_by_user(self, user_id: int) -> list[dict]:
         conn = self._conn()
         try:
             cursor = conn.cursor()
-            cursor.execute(_BASE_SELECT + " WHERE b.person_id = ?", (person_id,))
+            cursor.execute(_BASE_SELECT + " WHERE b.user_id = ?", (user_id,))
             return [dict(row) for row in cursor.fetchall()]
         finally:
             close_connection(conn)
 
-    def get_by_person_and_type(
-        self, person_id: int, budget_type: str
+    def get_by_user_and_type(
+        self, user_id: int, budget_type: str
     ) -> Optional[dict]:
         conn = self._conn()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                _BASE_SELECT + " WHERE b.person_id = ? AND b.type = ?",
-                (person_id, budget_type),
+                _BASE_SELECT + " WHERE b.user_id = ? AND b.type = ?",
+                (user_id, budget_type),
             )
             row = cursor.fetchone()
             return dict(row) if row else None
         finally:
             close_connection(conn)
 
-    def get_enabled_by_person(self, person_id: int) -> list[dict]:
+    def get_enabled_by_user(self, user_id: int) -> list[dict]:
         conn = self._conn()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "SELECT id, person_id, type, amount, enabled, created_at "
-                "FROM budgets WHERE person_id = ? AND enabled = 1",
-                (person_id,),
+                "SELECT id, user_id, type, amount, enabled, created_at "
+                "FROM budgets WHERE user_id = ? AND enabled = 1",
+                (user_id,),
             )
             return [dict(row) for row in cursor.fetchall()]
         finally:
             close_connection(conn)
 
-    def create(self, person_id: int, budget_type: str, amount: float) -> dict:
+    def create(self, user_id: int, budget_type: str, amount: float) -> dict:
         conn = self._conn()
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO budgets (person_id, type, amount) VALUES (?, ?, ?)",
-                (person_id, budget_type, amount),
+                "INSERT INTO budgets (user_id, type, amount) VALUES (?, ?, ?)",
+                (user_id, budget_type, amount),
             )
             conn.commit()
             new_id = cursor.lastrowid

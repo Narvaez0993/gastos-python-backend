@@ -15,12 +15,12 @@ class MoneySource(Base):
 
     __tablename__ = "money_sources"
     __table_args__ = (
-        UniqueConstraint("person_id", "name_normalized", name="uq_person_name_normalized"),
+        UniqueConstraint("user_id", "name_normalized", name="uq_user_name_normalized"),
     )
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True, autoincrement=True)
-    person_id: Mapped[int] = mapped_column(
-        Integer, ForeignKey("persons.id"), nullable=False
+    user_id: Mapped[int] = mapped_column(
+        Integer, ForeignKey("users.id"), nullable=False
     )
     name: Mapped[str] = mapped_column(Text, nullable=False)
     name_normalized: Mapped[str] = mapped_column(Text, nullable=False)

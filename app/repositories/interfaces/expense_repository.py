@@ -9,7 +9,7 @@ class IExpenseRepository(ABC):
 
     @abstractmethod
     def get_all(self) -> list[dict]:
-        """Devuelve todos los gastos con datos de persona y fuente, ordenados por fecha desc."""
+        """Devuelve todos los gastos con datos de usuario y fuente, ordenados por fecha desc."""
 
     @abstractmethod
     def get_by_id(self, expense_id: int) -> Optional[dict]:
@@ -18,7 +18,7 @@ class IExpenseRepository(ABC):
     @abstractmethod
     def create(
         self,
-        person_id: int,
+        user_id: int,
         amount: float,
         description: str,
         category: Optional[str],
@@ -46,16 +46,16 @@ class IExpenseRepository(ABC):
     @abstractmethod
     def get_filtered(
         self,
-        person_id: Optional[int] = None,
+        user_id: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> list[dict]:
-        """Lista gastos filtrados por persona y rango de fechas (inclusive)."""
+        """Lista gastos filtrados por usuario y rango de fechas (inclusive)."""
 
     @abstractmethod
     def get_summary(
         self,
-        person_id: Optional[int] = None,
+        user_id: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> dict:
@@ -63,6 +63,6 @@ class IExpenseRepository(ABC):
 
     @abstractmethod
     def get_spent_in_period(
-        self, person_id: int, start_date: str, end_date: str
+        self, user_id: int, start_date: str, end_date: str
     ) -> float:
-        """Suma de gastos de la persona en el rango. 0 si no hay."""
+        """Suma de gastos del usuario en el rango. 0 si no hay."""

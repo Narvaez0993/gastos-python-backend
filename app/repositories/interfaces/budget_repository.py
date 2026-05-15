@@ -16,22 +16,22 @@ class IBudgetRepository(ABC):
         """Devuelve el presupuesto por id, o None si no existe."""
 
     @abstractmethod
-    def get_by_person(self, person_id: int) -> list[dict]:
-        """Lista los presupuestos de la persona."""
+    def get_by_user(self, user_id: int) -> list[dict]:
+        """Lista los presupuestos del usuario."""
 
     @abstractmethod
-    def get_by_person_and_type(
-        self, person_id: int, budget_type: str
+    def get_by_user_and_type(
+        self, user_id: int, budget_type: str
     ) -> Optional[dict]:
-        """Devuelve el presupuesto por (persona, tipo). None si no existe."""
+        """Devuelve el presupuesto por (usuario, tipo). None si no existe."""
 
     @abstractmethod
-    def get_enabled_by_person(self, person_id: int) -> list[dict]:
-        """Lista los presupuestos habilitados de la persona (para validación de límites)."""
+    def get_enabled_by_user(self, user_id: int) -> list[dict]:
+        """Lista los presupuestos habilitados del usuario (para validación de límites)."""
 
     @abstractmethod
     def create(
-        self, person_id: int, budget_type: str, amount: float
+        self, user_id: int, budget_type: str, amount: float
     ) -> dict:
         """Crea un presupuesto y devuelve el registro creado."""
 

@@ -17,30 +17,34 @@ from app.repositories.interfaces.money_source_movement_repository import (
     IMoneySourceMovementRepository,
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
-from app.repositories.interfaces.person_repository import IPersonRepository
-from app.repositories.jpa import MoneySourceJpaRepository, PersonJpaRepository
+from app.repositories.interfaces.user_repository import IUserRepository
+from app.repositories.jpa import MoneySourceJpaRepository, UserJpaRepository
 from app.repositories.sql import (
+    AttachmentSqlRepository,
     BudgetSqlRepository,
     ExpenseSqlRepository,
     MoneySourceMovementSqlRepository,
     MoneySourceSqlRepository,
-    PersonSqlRepository,
+    UserSqlRepository,
 )
+from app.services.ai_capture_service import AICaptureService
+from app.services.attachment_service import AttachmentService
+from app.services.auth_service import AuthService
 from app.services.budget_service import BudgetService
 from app.services.expense_service import ExpenseService
 from app.services.money_source_service import MoneySourceService
-from app.services.person_service import PersonService
+from app.services.storage_service import LocalFilesystemBackend, StorageBackend
 
 # ---- Repositorios ----
-# Persons y MoneySources tienen dos backends seleccionables (SQL crudo o JPA / SQLAlchemy ORM).
-# Expenses, Budgets y Movements usan solo SQL crudo, pero igual dependen de su interfaz para
-# que los services no estén acoplados a la implementación concreta (DIP).
+# Users y MoneySources tienen dos backends seleccionables (SQL crudo o JPA / SQLAlchemy ORM).
+# Expenses, Budgets y Movements usan solo SQL crudo, pero igual dependen de su interfaz
+# para que los services no estén acoplados a la implementación concreta (DIP).
 
 
-def get_person_repo(db: Session = Depends(get_db)) -> IPersonRepository:
-    if get_settings().PERSON_REPO_BACKEND == "jpa":
-        return PersonJpaRepository(db)
-    return PersonSqlRepository()
+def get_user_repo(db: Session = Depends(get_db)) -> IUserRepository:
+    if get_settings().USER_REPO_BACKEND == "jpa":
+        return UserJpaRepository(db)
+    return UserSqlRepository()
 
 
 def get_money_source_repo(db: Session = Depends(get_db)) -> IMoneySourceRepository:
@@ -64,34 +68,58 @@ def get_movement_repo() -> IMoneySourceMovementRepository:
 # ---- Services ----
 
 
-def get_person_service(
-    person_repo: IPersonRepository = Depends(get_person_repo),
-) -> PersonService:
-    return PersonService(person_repo)
+def get_auth_service(
+    user_repo: IUserRepository = Depends(get_user_repo),
+) -> AuthService:
+    return AuthService(user_repo)
 
 
 def get_money_source_service(
     money_source_repo: IMoneySourceRepository = Depends(get_money_source_repo),
-    person_repo: IPersonRepository = Depends(get_person_repo),
     movement_repo: IMoneySourceMovementRepository = Depends(get_movement_repo),
 ) -> MoneySourceService:
-    return MoneySourceService(money_source_repo, person_repo, movement_repo)
+    return MoneySourceService(money_source_repo, movement_repo)
 
 
 def get_budget_service(
     budget_repo: IBudgetRepository = Depends(get_budget_repo),
-    person_repo: IPersonRepository = Depends(get_person_repo),
 ) -> BudgetService:
-    return BudgetService(budget_repo, person_repo)
+    return BudgetService(budget_repo)
+
+
+def get_attachment_repo_eager() -> AttachmentSqlRepository:
+    return AttachmentSqlRepository()
 
 
 def get_expense_service(
     expense_repo: IExpenseRepository = Depends(get_expense_repo),
-    person_repo: IPersonRepository = Depends(get_person_repo),
     money_source_repo: IMoneySourceRepository = Depends(get_money_source_repo),
     movement_repo: IMoneySourceMovementRepository = Depends(get_movement_repo),
     budget_repo: IBudgetRepository = Depends(get_budget_repo),
+    attachment_repo: AttachmentSqlRepository = Depends(get_attachment_repo_eager),
 ) -> ExpenseService:
     return ExpenseService(
-        expense_repo, person_repo, money_source_repo, movement_repo, budget_repo
+        expense_repo, money_source_repo, movement_repo, budget_repo, attachment_repo
     )
+
+
+def get_ai_capture_service(
+    money_source_repo: IMoneySourceRepository = Depends(get_money_source_repo),
+) -> AICaptureService:
+    return AICaptureService(get_settings(), money_source_repo)
+
+
+def get_attachment_repo() -> AttachmentSqlRepository:
+    return AttachmentSqlRepository()
+
+
+def get_storage_backend() -> StorageBackend:
+    return LocalFilesystemBackend(get_settings())
+
+
+def get_attachment_service(
+    repo: AttachmentSqlRepository = Depends(get_attachment_repo),
+    storage: StorageBackend = Depends(get_storage_backend),
+    ai: AICaptureService = Depends(get_ai_capture_service),
+) -> AttachmentService:
+    return AttachmentService(get_settings(), storage, repo, ai)

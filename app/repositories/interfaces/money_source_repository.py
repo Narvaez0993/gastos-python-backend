@@ -16,19 +16,19 @@ class IMoneySourceRepository(ABC):
         """Devuelve la fuente con el id dado, o None si no existe."""
 
     @abstractmethod
-    def get_by_person(self, person_id: int) -> list[dict]:
-        """Devuelve las fuentes de la persona ordenadas: habilitadas primero, luego por nombre."""
+    def get_by_user(self, user_id: int) -> list[dict]:
+        """Devuelve las fuentes del usuario ordenadas: habilitadas primero, luego por nombre."""
 
     @abstractmethod
-    def get_by_person_and_normalized_name(
-        self, person_id: int, name_normalized: str
+    def get_by_user_and_normalized_name(
+        self, user_id: int, name_normalized: str
     ) -> Optional[dict]:
         """Busca por dueño y nombre normalizado (clave de unicidad). None si no existe."""
 
     @abstractmethod
     def create(
         self,
-        person_id: int,
+        user_id: int,
         name: str,
         name_normalized: str,
         balance: float = 0,
@@ -57,7 +57,7 @@ class IMoneySourceRepository(ABC):
     @abstractmethod
     def check_duplicate_name(
         self,
-        person_id: int,
+        user_id: int,
         name_normalized: str,
         exclude_id: Optional[int] = None,
     ) -> bool:

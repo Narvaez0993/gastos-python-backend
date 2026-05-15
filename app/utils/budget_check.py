@@ -10,12 +10,12 @@ from app.utils.dates import get_period_range
 def check_budgets(
     budget_repo: IBudgetRepository,
     expense_repo: IExpenseRepository,
-    person_id: int,
+    user_id: int,
     tz: str = "America/Bogota",
 ) -> list[dict]:
-    """Verifica los presupuestos habilitados de la persona y retorna alertas para los
+    """Verifica los presupuestos habilitados del usuario y retorna alertas para los
     que están al 80% o más de su límite en el periodo correspondiente."""
-    budgets = budget_repo.get_enabled_by_person(person_id)
+    budgets = budget_repo.get_enabled_by_user(user_id)
     alerts: list[dict] = []
 
     for budget in budgets:
@@ -24,7 +24,7 @@ def check_budgets(
             continue
 
         spent = expense_repo.get_spent_in_period(
-            person_id, start.isoformat(), end.isoformat()
+            user_id, start.isoformat(), end.isoformat()
         )
 
         if budget["amount"] <= 0:

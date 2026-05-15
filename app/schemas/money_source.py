@@ -6,7 +6,6 @@ from pydantic import BaseModel
 
 
 class MoneySourceCreate(BaseModel):
-    person_id: int
     name: str
     balance: float = 0
 
@@ -19,7 +18,7 @@ class MoneySourceUpdate(BaseModel):
 
 class MoneySourceOut(BaseModel):
     id: int
-    person_id: int
+    user_id: int
     name: str
     name_normalized: str
     balance: float

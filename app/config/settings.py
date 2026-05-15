@@ -28,10 +28,25 @@ class Settings(BaseSettings):
 
     CORS_ORIGINS: str = "*"
 
-    PERSON_REPO_BACKEND: Literal["sql", "jpa"] = "jpa"
+    USER_REPO_BACKEND: Literal["sql", "jpa"] = "jpa"
     MONEY_SOURCE_REPO_BACKEND: Literal["sql", "jpa"] = "jpa"
 
     DEFAULT_TIMEZONE: str = "America/Bogota"
+
+    JWT_SECRET: str = ""
+    JWT_ALGORITHM: Literal["HS256"] = "HS256"
+    JWT_EXPIRES_MINUTES: int = 1440
+    BCRYPT_ROUNDS: int = 12
+
+    ANTHROPIC_API_KEY: str = "***REMOVED***"
+    CLAUDE_MODEL: str = "claude-sonnet-4-5"
+    CLAUDE_MAX_TOKENS: int = 1024
+
+    UPLOADS_DIR: str = "uploads"
+    MAX_ATTACHMENT_MB: int = 10
+    ALLOWED_ATTACHMENT_MIMES: str = (
+        "image/jpeg,image/png,image/webp,image/heic,application/pdf"
+    )
 
     model_config = SettingsConfigDict(
         env_file=f".env.{os.getenv('APP_ENV', 'dev')}",
@@ -40,10 +55,30 @@ class Settings(BaseSettings):
         case_sensitive=False,
     )
 
+    def model_post_init(self, __context) -> None:
+        if self.APP_ENV == "prod" and (not self.JWT_SECRET or len(self.JWT_SECRET) < 32):
+            raise ValueError(
+                "JWT_SECRET es obligatorio en APP_ENV=prod y debe tener ≥32 caracteres. "
+                "Generar con: openssl rand -hex 32"
+            )
+
     @property
     def cors_origins_list(self) -> list[str]:
         """Lista parseada de CORS_ORIGINS (separados por coma en .env)."""
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def allowed_attachment_mimes_list(self) -> list[str]:
+        return [m.strip() for m in self.ALLOWED_ATTACHMENT_MIMES.split(",") if m.strip()]
+
+    def get_uploads_absolute_path(self) -> str:
+        """Resuelve UPLOADS_DIR a ruta absoluta (anclada al root del proyecto si es relativa)."""
+        if os.path.isabs(self.UPLOADS_DIR):
+            return self.UPLOADS_DIR
+        project_root = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        return os.path.join(project_root, self.UPLOADS_DIR)
 
     def get_database_absolute_path(self) -> str:
         """Resuelve DATABASE_PATH a ruta absoluta. Si es relativa, se ancla a la raíz del proyecto."""

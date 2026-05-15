@@ -6,7 +6,7 @@ from app.database import close_connection, get_connection
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
 
 _COLUMNS = (
-    "id, person_id, name, name_normalized, balance, enabled, created_at"
+    "id, user_id, name, name_normalized, balance, enabled, created_at"
 )
 
 
@@ -44,29 +44,29 @@ class MoneySourceSqlRepository(IMoneySourceRepository):
         finally:
             close_connection(conn)
 
-    def get_by_person(self, person_id: int) -> list[dict]:
+    def get_by_user(self, user_id: int) -> list[dict]:
         conn = self._conn()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 f"SELECT {_COLUMNS} FROM money_sources "
-                f"WHERE person_id = ? ORDER BY enabled DESC, name ASC",
-                (person_id,),
+                f"WHERE user_id = ? ORDER BY enabled DESC, name ASC",
+                (user_id,),
             )
             return [dict(row) for row in cursor.fetchall()]
         finally:
             close_connection(conn)
 
-    def get_by_person_and_normalized_name(
-        self, person_id: int, name_normalized: str
+    def get_by_user_and_normalized_name(
+        self, user_id: int, name_normalized: str
     ) -> Optional[dict]:
         conn = self._conn()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 f"SELECT {_COLUMNS} FROM money_sources "
-                f"WHERE person_id = ? AND name_normalized = ?",
-                (person_id, name_normalized),
+                f"WHERE user_id = ? AND name_normalized = ?",
+                (user_id, name_normalized),
             )
             row = cursor.fetchone()
             return dict(row) if row else None
@@ -75,7 +75,7 @@ class MoneySourceSqlRepository(IMoneySourceRepository):
 
     def create(
         self,
-        person_id: int,
+        user_id: int,
         name: str,
         name_normalized: str,
         balance: float = 0,
@@ -84,9 +84,9 @@ class MoneySourceSqlRepository(IMoneySourceRepository):
         try:
             cursor = conn.cursor()
             cursor.execute(
-                "INSERT INTO money_sources (person_id, name, name_normalized, balance) "
+                "INSERT INTO money_sources (user_id, name, name_normalized, balance) "
                 "VALUES (?, ?, ?, ?)",
-                (person_id, name, name_normalized, balance),
+                (user_id, name, name_normalized, balance),
             )
             conn.commit()
             new_id = cursor.lastrowid
@@ -169,7 +169,7 @@ class MoneySourceSqlRepository(IMoneySourceRepository):
 
     def check_duplicate_name(
         self,
-        person_id: int,
+        user_id: int,
         name_normalized: str,
         exclude_id: Optional[int] = None,
     ) -> bool:
@@ -179,14 +179,14 @@ class MoneySourceSqlRepository(IMoneySourceRepository):
             if exclude_id:
                 cursor.execute(
                     "SELECT id FROM money_sources "
-                    "WHERE person_id = ? AND name_normalized = ? AND id != ?",
-                    (person_id, name_normalized, exclude_id),
+                    "WHERE user_id = ? AND name_normalized = ? AND id != ?",
+                    (user_id, name_normalized, exclude_id),
                 )
             else:
                 cursor.execute(
                     "SELECT id FROM money_sources "
-                    "WHERE person_id = ? AND name_normalized = ?",
-                    (person_id, name_normalized),
+                    "WHERE user_id = ? AND name_normalized = ?",
+                    (user_id, name_normalized),
                 )
             return cursor.fetchone() is not None
         finally:

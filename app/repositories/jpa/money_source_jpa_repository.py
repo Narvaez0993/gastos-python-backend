@@ -19,7 +19,7 @@ class MoneySourceJpaRepository(IMoneySourceRepository):
     def _to_dict(ms: MoneySource) -> dict:
         return {
             "id": ms.id,
-            "person_id": ms.person_id,
+            "user_id": ms.user_id,
             "name": ms.name,
             "name_normalized": ms.name_normalized,
             "balance": ms.balance,
@@ -37,19 +37,19 @@ class MoneySourceJpaRepository(IMoneySourceRepository):
         ms = self.db.get(MoneySource, source_id)
         return self._to_dict(ms) if ms else None
 
-    def get_by_person(self, person_id: int) -> list[dict]:
+    def get_by_user(self, user_id: int) -> list[dict]:
         stmt = (
             select(MoneySource)
-            .where(MoneySource.person_id == person_id)
+            .where(MoneySource.user_id == user_id)
             .order_by(MoneySource.enabled.desc(), MoneySource.name.asc())
         )
         return [self._to_dict(ms) for ms in self.db.execute(stmt).scalars().all()]
 
-    def get_by_person_and_normalized_name(
-        self, person_id: int, name_normalized: str
+    def get_by_user_and_normalized_name(
+        self, user_id: int, name_normalized: str
     ) -> Optional[dict]:
         stmt = select(MoneySource).where(
-            MoneySource.person_id == person_id,
+            MoneySource.user_id == user_id,
             MoneySource.name_normalized == name_normalized,
         )
         ms = self.db.execute(stmt).scalar_one_or_none()
@@ -57,13 +57,13 @@ class MoneySourceJpaRepository(IMoneySourceRepository):
 
     def create(
         self,
-        person_id: int,
+        user_id: int,
         name: str,
         name_normalized: str,
         balance: float = 0,
     ) -> dict:
         ms = MoneySource(
-            person_id=person_id,
+            user_id=user_id,
             name=name,
             name_normalized=name_normalized,
             balance=balance,
@@ -116,12 +116,12 @@ class MoneySourceJpaRepository(IMoneySourceRepository):
 
     def check_duplicate_name(
         self,
-        person_id: int,
+        user_id: int,
         name_normalized: str,
         exclude_id: Optional[int] = None,
     ) -> bool:
         stmt = select(MoneySource.id).where(
-            MoneySource.person_id == person_id,
+            MoneySource.user_id == user_id,
             MoneySource.name_normalized == name_normalized,
         )
         if exclude_id:

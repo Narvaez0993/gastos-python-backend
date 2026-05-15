@@ -6,14 +6,16 @@ from app.repositories.sql.money_source_movement_sql_repository import (
     MoneySourceMovementSqlRepository,
 )
 from app.repositories.sql.money_source_sql_repository import MoneySourceSqlRepository
-from app.repositories.sql.person_sql_repository import PersonSqlRepository
+from app.repositories.sql.user_sql_repository import UserSqlRepository
 
 
 @pytest.fixture
 def source_id(tmp_sqlite_path):
-    person = PersonSqlRepository(db_path=tmp_sqlite_path).create("Sebastian")
+    user = UserSqlRepository(db_path=tmp_sqlite_path).create(
+        name="Sebastian", email="seba@example.com", password_hash="h"
+    )
     source = MoneySourceSqlRepository(db_path=tmp_sqlite_path).create(
-        person["id"], "Nequi", "nequi", balance=1000
+        user["id"], "Nequi", "nequi", balance=1000
     )
     return source["id"]
 

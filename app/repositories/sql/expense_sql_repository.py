@@ -6,13 +6,13 @@ from app.database import close_connection, get_connection
 from app.repositories.interfaces.expense_repository import IExpenseRepository
 
 _BASE_SELECT = """
-    SELECT e.id, e.person_id, e.amount, e.description, e.category,
+    SELECT e.id, e.user_id, e.amount, e.description, e.category,
            e.date, e.money_source_id, e.created_at,
-           p.name as person_name,
+           u.name as user_name,
            ms.id as ms_id, ms.name as ms_name,
            ms.balance as ms_balance, ms.enabled as ms_enabled
     FROM expenses e
-    JOIN persons p ON e.person_id = p.id
+    JOIN users u ON e.user_id = u.id
     LEFT JOIN money_sources ms ON e.money_source_id = ms.id
 """
 
@@ -47,7 +47,7 @@ class ExpenseSqlRepository(IExpenseRepository):
 
     def create(
         self,
-        person_id: int,
+        user_id: int,
         amount: float,
         description: str,
         category: Optional[str],
@@ -59,9 +59,9 @@ class ExpenseSqlRepository(IExpenseRepository):
             cursor = conn.cursor()
             cursor.execute(
                 "INSERT INTO expenses "
-                "(person_id, amount, description, category, date, money_source_id) "
+                "(user_id, amount, description, category, date, money_source_id) "
                 "VALUES (?, ?, ?, ?, ?, ?)",
-                (person_id, amount, description, category, date, money_source_id),
+                (user_id, amount, description, category, date, money_source_id),
             )
             conn.commit()
             new_id = cursor.lastrowid
@@ -108,7 +108,7 @@ class ExpenseSqlRepository(IExpenseRepository):
 
     def get_filtered(
         self,
-        person_id: Optional[int] = None,
+        user_id: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> list[dict]:
@@ -118,9 +118,9 @@ class ExpenseSqlRepository(IExpenseRepository):
             query = _BASE_SELECT + " WHERE 1=1"
             params = []
 
-            if person_id is not None:
-                query += " AND e.person_id = ?"
-                params.append(person_id)
+            if user_id is not None:
+                query += " AND e.user_id = ?"
+                params.append(user_id)
             if start_date is not None:
                 query += " AND e.date >= ?"
                 params.append(start_date)
@@ -136,7 +136,7 @@ class ExpenseSqlRepository(IExpenseRepository):
 
     def get_summary(
         self,
-        person_id: Optional[int] = None,
+        user_id: Optional[int] = None,
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> dict:
@@ -146,9 +146,9 @@ class ExpenseSqlRepository(IExpenseRepository):
 
             where_clauses = []
             params = []
-            if person_id is not None:
-                where_clauses.append("person_id = ?")
-                params.append(person_id)
+            if user_id is not None:
+                where_clauses.append("user_id = ?")
+                params.append(user_id)
             if start_date is not None:
                 where_clauses.append("date >= ?")
                 params.append(start_date)
@@ -186,15 +186,15 @@ class ExpenseSqlRepository(IExpenseRepository):
             close_connection(conn)
 
     def get_spent_in_period(
-        self, person_id: int, start_date: str, end_date: str
+        self, user_id: int, start_date: str, end_date: str
     ) -> float:
         conn = self._conn()
         try:
             cursor = conn.cursor()
             cursor.execute(
                 "SELECT COALESCE(SUM(amount), 0) as total FROM expenses "
-                "WHERE person_id = ? AND date >= ? AND date <= ?",
-                (person_id, start_date, end_date),
+                "WHERE user_id = ? AND date >= ? AND date <= ?",
+                (user_id, start_date, end_date),
             )
             return float(cursor.fetchone()["total"])
         finally:

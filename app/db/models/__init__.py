@@ -5,6 +5,6 @@ Nota: importar todos los modelos aquí asegura que estén registrados en
 """
 
 from app.db.models.money_source_model import MoneySource
-from app.db.models.person_model import Person
+from app.db.models.user_model import User
 
-__all__ = ["MoneySource", "Person"]
+__all__ = ["MoneySource", "User"]

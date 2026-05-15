@@ -10,12 +10,12 @@ from app.repositories.interfaces.money_source_movement_repository import (
     IMoneySourceMovementRepository,
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
-from app.repositories.interfaces.person_repository import IPersonRepository
+from app.repositories.interfaces.user_repository import IUserRepository
 
 __all__ = [
     "IBudgetRepository",
     "IExpenseRepository",
     "IMoneySourceMovementRepository",
     "IMoneySourceRepository",
-    "IPersonRepository",
+    "IUserRepository",
 ]
