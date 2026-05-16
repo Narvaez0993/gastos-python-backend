@@ -1,10 +1,3 @@
-"""Pruebas unitarias del AuthService.
-
-Algunas pruebas usan `auth_service` (con repo mockeado) y otras `auth_service_sql`
-(con repo real respaldado por BD temporal) cuando el flujo end-to-end vale más
-que el mock.
-"""
-
 import time
 from datetime import datetime, timedelta, timezone
 

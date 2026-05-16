@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio SQL crudo de presupuestos."""
-
 import pytest
 
 from app.repositories.sql.budget_sql_repository import BudgetSqlRepository

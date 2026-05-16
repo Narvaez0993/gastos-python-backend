@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio JPA (SQLAlchemy) de fuentes de dinero."""
-
 import pytest
 
 from app.repositories.jpa.money_source_jpa_repository import MoneySourceJpaRepository

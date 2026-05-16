@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio SQL crudo de gastos."""
-
 import pytest
 
 from app.repositories.sql.expense_sql_repository import ExpenseSqlRepository

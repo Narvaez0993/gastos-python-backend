@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio SQL crudo de fuentes de dinero."""
-
 import pytest
 
 from app.repositories.sql.money_source_sql_repository import MoneySourceSqlRepository

@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio SQL crudo de movimientos de fuentes."""
-
 import pytest
 
 from app.repositories.sql.money_source_movement_sql_repository import (

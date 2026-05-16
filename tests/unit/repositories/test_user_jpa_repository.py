@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio JPA (SQLAlchemy) de usuarios."""
-
 from app.repositories.jpa.user_jpa_repository import UserJpaRepository
 
 

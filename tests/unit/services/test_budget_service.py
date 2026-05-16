@@ -1,5 +1,3 @@
-"""Pruebas unitarias de BudgetService con mocks."""
-
 import pytest
 from fastapi import HTTPException
 

@@ -1,5 +1,3 @@
-"""Pruebas unitarias de ExpenseService con mocks de los 4 repositorios."""
-
 import pytest
 from fastapi import HTTPException
 

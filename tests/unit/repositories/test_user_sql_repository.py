@@ -1,5 +1,3 @@
-"""Pruebas unitarias del repositorio SQL crudo de usuarios."""
-
 from app.repositories.sql.user_sql_repository import UserSqlRepository
 
 
