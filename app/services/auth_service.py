@@ -1,4 +1,3 @@
-"""Servicio de autenticación: hashing, JWT, registro y login."""
 
 from datetime import datetime, timedelta, timezone
 from typing import Optional
@@ -11,23 +10,13 @@ from app.config.settings import get_settings
 from app.repositories.interfaces.user_repository import IUserRepository
 from app.schemas.auth import LoginRequest, RegisterRequest
 
-
-# bcrypt acepta máximo 72 bytes en la entrada. Truncamos silenciosamente
-# para mantener compatibilidad con el comportamiento clásico (pre bcrypt 4.1).
 _BCRYPT_MAX_BYTES = 72
-
 
 def _encode_for_bcrypt(password: str) -> bytes:
     encoded = password.encode("utf-8")
     return encoded[:_BCRYPT_MAX_BYTES]
 
-
 class AuthService:
-    """Encapsula registro, login y emisión/validación de JWT.
-
-    Decisión: `password_hash` SOLO se lee/escribe acá y en el repositorio.
-    Nunca debe salir hacia capas superiores (services, routes, schemas de respuesta).
-    """
 
     def __init__(self, user_repo: IUserRepository):
         self.user_repo = user_repo
@@ -47,7 +36,6 @@ class AuthService:
             return False
 
     def create_access_token(self, user_id: int) -> tuple[str, int]:
-        """Devuelve (token, expires_in_seconds)."""
         settings = get_settings()
         now = datetime.now(timezone.utc)
         expire = now + timedelta(minutes=settings.JWT_EXPIRES_MINUTES)
@@ -76,7 +64,6 @@ class AuthService:
             ) from e
 
     def register_user(self, data: RegisterRequest) -> tuple[dict, str, int]:
-        """Crea un usuario y devuelve (user_public_dict, access_token, expires_in)."""
         existing = self.user_repo.get_by_email(data.email)
         if existing is not None:
             raise HTTPException(
@@ -107,7 +94,6 @@ class AuthService:
         return public, token, expires_in
 
     def get_user_from_token(self, token: str) -> Optional[dict]:
-        """Decodifica el JWT y carga el user (sin password_hash). Lanza 401 si inválido."""
         payload = self.decode_token(token)
         sub = payload.get("sub")
         if not sub:

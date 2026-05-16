@@ -2,9 +2,7 @@ from fastapi import HTTPException
 
 from app.repositories.interfaces.budget_repository import IBudgetRepository
 
-
 def _format_budget(row):
-    """Formatea una fila de la BD al formato de respuesta de la API."""
     return {
         "id": row["id"],
         "user": {"id": row["user_id"], "name": row["user_name"]},
@@ -14,10 +12,7 @@ def _format_budget(row):
         "created_at": row["created_at"],
     }
 
-
 class BudgetService:
-    """Lógica de negocio para presupuestos. El user_id viene del JWT, validado por
-    `get_current_user` en la capa de routes."""
 
     def __init__(self, budget_repo: IBudgetRepository):
         self.budget_repo = budget_repo

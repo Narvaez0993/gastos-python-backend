@@ -1,9 +1,3 @@
-"""Servicio del asistente conversacional financiero.
-
-Claude llama a una de las 5 tools para responder con datos reales del usuario.
-El loop ejecuta cada tool, devuelve el resultado a Claude, y repite hasta que
-Claude produzca una respuesta final (sin tool_use) — máximo `MAX_ITER` vueltas.
-"""
 
 from __future__ import annotations
 
@@ -23,11 +17,7 @@ from app.repositories.interfaces.money_source_repository import IMoneySourceRepo
 from app.schemas.chat import ChatMessage
 from app.utils.dates import get_period_range, local_day_end_utc, local_day_start_utc
 
-
 MAX_ITER = 5
-
-
-# ---- Tool definitions ----
 
 TOOLS: List[Dict[str, Any]] = [
     {
@@ -124,9 +114,7 @@ TOOLS: List[Dict[str, Any]] = [
     },
 ]
 
-
 def _month_range_utc(month: str, tz: str) -> tuple[str, str]:
-    """Convierte 'YYYY-MM' a (inicio_mes_UTC, fin_mes_UTC) en ISO."""
     year, mo = month.split("-")
     year_i, mo_i = int(year), int(mo)
     last_day = calendar.monthrange(year_i, mo_i)[1]
@@ -134,9 +122,7 @@ def _month_range_utc(month: str, tz: str) -> tuple[str, str]:
     end = local_day_end_utc(f"{year_i:04d}-{mo_i:02d}-{last_day:02d}", tz).isoformat()
     return start, end
 
-
 class AIChatService:
-    """Asistente conversacional. No persiste — el cliente reenvía el historial completo."""
 
     def __init__(
         self,
@@ -154,16 +140,12 @@ class AIChatService:
         else:
             self._client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
 
-    # ---- Public API ----
-
     def chat(
         self,
         history: List[ChatMessage],
         user_id: int,
         tz: str = "America/Bogota",
     ) -> tuple[ChatMessage, int]:
-        """Procesa un turno. Devuelve el mensaje final del asistente y cuántas
-        iteraciones del loop tomó (incluye llamadas a tools)."""
 
         if self._client is None:
             raise HTTPException(
@@ -197,7 +179,6 @@ class AIChatService:
                     iteration,
                 )
 
-            # Hay tool_use: ejecutar todas las tools y mandar resultados.
             assistant_blocks = [block.model_dump() for block in resp.content]
             messages.append({"role": "assistant", "content": assistant_blocks})
 
@@ -215,7 +196,6 @@ class AIChatService:
                 )
             messages.append({"role": "user", "content": tool_results})
 
-        # Si llegamos acá Claude no convergió. Mejor avisar que mentir.
         return (
             ChatMessage(
                 role="assistant",
@@ -227,8 +207,6 @@ class AIChatService:
             ),
             MAX_ITER,
         )
-
-    # ---- Tool dispatch ----
 
     def _dispatch_tool(
         self, name: str, args: Dict[str, Any], user_id: int, tz: str
@@ -347,7 +325,6 @@ class AIChatService:
         summary_a = self.expense_repo.get_summary(user_id, start_a, end_a)
         summary_b = self.expense_repo.get_summary(user_id, start_b, end_b)
 
-        # Diff por categoría: b - a (mes B vs mes A)
         cats_a = {c["category"]: c["total"] for c in summary_a.get("by_category", [])}
         cats_b = {c["category"]: c["total"] for c in summary_b.get("by_category", [])}
         all_cats = sorted(set(cats_a) | set(cats_b))
@@ -366,8 +343,6 @@ class AIChatService:
             "total_delta": summary_b["total"] - summary_a["total"],
             "by_category_diff": by_category_diff,
         }
-
-    # ---- Helpers ----
 
     def _build_system_prompt(self, tz: str) -> str:
         now_local = datetime.now(pytz.timezone(tz)).strftime("%Y-%m-%d %H:%M %Z")

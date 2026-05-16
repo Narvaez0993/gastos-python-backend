@@ -1,5 +1,3 @@
-"""Servicio de almacenamiento de archivos. Interface-driven para permitir swap
-a S3/MinIO en el futuro sin tocar los services."""
 
 from __future__ import annotations
 
@@ -12,7 +10,6 @@ from typing import BinaryIO
 
 from app.config.settings import Settings
 
-
 MIME_TO_EXT = {
     "image/jpeg": ".jpg",
     "image/jpg": ".jpg",
@@ -21,7 +18,6 @@ MIME_TO_EXT = {
     "image/heic": ".heic",
     "application/pdf": ".pdf",
 }
-
 
 class StorageBackend(ABC):
     @abstractmethod
@@ -36,9 +32,7 @@ class StorageBackend(ABC):
     def absolute(self, path: Path) -> Path:
         ...
 
-
 class LocalFilesystemBackend(StorageBackend):
-    """Implementación filesystem. Estructura: {root}/{scope}/{user_id}/{YYYY-MM-DD}/{uuid}.{ext}"""
 
     def __init__(self, settings: Settings):
         self.settings = settings
@@ -51,7 +45,6 @@ class LocalFilesystemBackend(StorageBackend):
         rel_dir = Path(scope) / str(user_id) / today
         abs_dir = self.root / rel_dir
         abs_dir.mkdir(parents=True, exist_ok=True)
-        # 0700 para directorios
         try:
             os.chmod(abs_dir, 0o700)
         except OSError:

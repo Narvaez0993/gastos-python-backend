@@ -1,4 +1,3 @@
-"""Implementación SQL crudo del repositorio de usuarios."""
 
 import sqlite3
 from typing import Optional
@@ -6,12 +5,9 @@ from typing import Optional
 from app.database import close_connection, get_connection
 from app.repositories.interfaces.user_repository import IUserRepository
 
-
 _PUBLIC_COLUMNS = "id, name, email, created_at"
 
-
 class UserSqlRepository(IUserRepository):
-    """Repositorio de usuarios usando SQL crudo con sqlite3."""
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path

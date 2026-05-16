@@ -1,4 +1,3 @@
-"""Router de autenticación: register, login, me."""
 
 from fastapi import APIRouter, Depends, HTTPException, status
 
@@ -16,7 +15,6 @@ from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["Autenticación"])
 
-
 def _to_auth_response(user: dict, token: str, expires_in: int) -> AuthResponse:
     return AuthResponse(
         user=UserOut(**user),
@@ -24,7 +22,6 @@ def _to_auth_response(user: dict, token: str, expires_in: int) -> AuthResponse:
         token_type="bearer",
         expires_in=expires_in,
     )
-
 
 @router.post(
     "/register",
@@ -39,7 +36,6 @@ def register(
     user, token, expires_in = auth_service.register_user(data)
     return _to_auth_response(user, token, expires_in)
 
-
 @router.post(
     "/login",
     response_model=AuthResponse,
@@ -52,7 +48,6 @@ def login(
     user, token, expires_in = auth_service.authenticate_user(data)
     return _to_auth_response(user, token, expires_in)
 
-
 @router.get(
     "/me",
     response_model=UserOut,
@@ -60,7 +55,6 @@ def login(
 )
 def me(current_user: dict = Depends(get_current_user)) -> UserOut:
     return UserOut(**current_user)
-
 
 @router.put(
     "/me",

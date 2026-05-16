@@ -14,13 +14,10 @@ from app.repositories.sql.attachment_sql_repository import AttachmentSqlReposito
 from app.utils.budget_check import check_budgets
 from app.utils.dates import get_period_range, parse_date_to_noon_utc
 
-
 def resolve_tz(tz_query: str | None, tz_header: str | None) -> str:
     return tz_query or tz_header or "America/Bogota"
 
-
 def _format_expense(row):
-    """Formatea una fila de la BD al formato de respuesta de la API."""
     ms = None
     if row.get("ms_id"):
         ms = {
@@ -40,10 +37,7 @@ def _format_expense(row):
         "created_at": row["created_at"],
     }
 
-
 class ExpenseService:
-    """Lógica de negocio para gastos. El user_id se inyecta desde la capa de routes
-    (derivado del JWT vía `get_current_user`), no se valida acá: se confía en el dependency."""
 
     def __init__(
         self,

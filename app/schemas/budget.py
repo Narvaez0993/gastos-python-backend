@@ -4,22 +4,18 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-
 class BudgetCreate(BaseModel):
     type: str
     amount: float
-
 
 class BudgetUpdate(BaseModel):
     type: Optional[str] = None
     amount: Optional[float] = None
     enabled: Optional[bool] = None
 
-
 class BudgetUserOut(BaseModel):
     id: int
     name: str
-
 
 class BudgetOut(BaseModel):
     id: int
@@ -28,7 +24,6 @@ class BudgetOut(BaseModel):
     amount: float
     enabled: bool
     created_at: str
-
 
 class BudgetCreatedOut(BaseModel):
     id: int

@@ -9,15 +9,12 @@ from app.services.money_source_service import MoneySourceService
 
 router = APIRouter(prefix="/api/money-sources", tags=["Fuentes de Dinero"])
 
-
 @router.get("", summary="Listar fuentes de dinero del usuario actual")
 def list_money_sources(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Lista las fuentes de dinero del usuario, ordenadas por habilitadas y luego por nombre."""
     return service.list_money_sources(current_user["id"])
-
 
 @router.get("/{source_id}", summary="Obtener fuente de dinero por ID")
 def get_money_source(
@@ -25,9 +22,7 @@ def get_money_source(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Retorna una fuente de dinero del usuario autenticado."""
     return service.get_money_source(source_id, current_user["id"])
-
 
 @router.post("", status_code=201, summary="Crear fuente de dinero")
 def create_money_source(
@@ -35,9 +30,7 @@ def create_money_source(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Crea una nueva fuente de dinero con balance inicial opcional."""
     return service.create_money_source(current_user["id"], data)
-
 
 @router.put("/{source_id}", summary="Actualizar fuente de dinero")
 def update_money_source(
@@ -46,9 +39,7 @@ def update_money_source(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Actualiza balance, nombre o estado de una fuente de dinero."""
     return service.update_money_source(source_id, current_user["id"], data)
-
 
 @router.delete("/{source_id}", summary="Eliminar fuente de dinero")
 def delete_money_source(
@@ -56,9 +47,7 @@ def delete_money_source(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Elimina una fuente de dinero (solo si no tiene movimientos)."""
     return service.delete_money_source(source_id, current_user["id"])
-
 
 @router.post("/{source_id}/deposit", status_code=201, summary="Registrar depósito")
 def deposit(
@@ -67,9 +56,7 @@ def deposit(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Registra un depósito o ingreso en una fuente de dinero."""
     return service.deposit(source_id, current_user["id"], data)
-
 
 @router.get("/{source_id}/movements", summary="Historial de movimientos")
 def get_movements(
@@ -82,7 +69,6 @@ def get_movements(
     current_user: dict = Depends(get_current_user),
     service: MoneySourceService = Depends(get_money_source_service),
 ):
-    """Retorna el historial de movimientos de una fuente con paginación."""
     return service.get_movements(
         source_id, current_user["id"], type, startDate, endDate, page, limit
     )

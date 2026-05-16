@@ -1,8 +1,3 @@
-"""Servicio que usa Claude para parsear texto en lenguaje natural a gastos estructurados.
-
-Mantiene un contrato unificado vía CaptureResponse para que /capture/text,
-/capture/audio (futuro) y /capture/receipt (futuro) compartan el mismo shape.
-"""
 
 from __future__ import annotations
 
@@ -19,8 +14,6 @@ from app.config.settings import Settings
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
 from app.schemas.capture import CaptureResponse, ParsedExpenseItem
 
-
-# Categorías sugeridas. Coinciden con las del frontend.
 DEFAULT_CATEGORIES = [
     "Comida",
     "Transporte",
@@ -32,7 +25,6 @@ DEFAULT_CATEGORIES = [
     "Ropa",
     "Hogar",
 ]
-
 
 PARSE_TOOL = {
     "name": "parse_expenses",
@@ -94,9 +86,7 @@ PARSE_TOOL = {
     },
 }
 
-
 class AICaptureService:
-    """Cliente envuelto de Anthropic para extracción estructurada de gastos."""
 
     def __init__(
         self,
@@ -109,8 +99,6 @@ class AICaptureService:
             self._client: Optional[Anthropic] = None
         else:
             self._client = Anthropic(api_key=settings.ANTHROPIC_API_KEY)
-
-    # ---- Public API ----
 
     def parse_text(self, text: str, user_id: int, tz: str = "America/Bogota") -> CaptureResponse:
         if not text or not text.strip():
@@ -155,7 +143,6 @@ class AICaptureService:
         user_id: int,
         tz: str = "America/Bogota",
     ) -> CaptureResponse:
-        """Lee una imagen o PDF (recibo) con Claude Vision y extrae gastos."""
 
         if self._client is None:
             raise HTTPException(
@@ -205,8 +192,6 @@ class AICaptureService:
             transcript="(recibo adjunto)",
             model=self.settings.CLAUDE_MODEL,
         )
-
-    # ---- Helpers ----
 
     @staticmethod
     def _content_block_for_attachment(file_bytes: bytes, mime_type: str) -> dict:

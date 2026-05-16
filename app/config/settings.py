@@ -1,4 +1,3 @@
-"""Configuración tipada del proyecto cargada desde variables de entorno y .env."""
 
 import os
 from functools import lru_cache
@@ -6,14 +5,7 @@ from typing import Literal
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-
 class Settings(BaseSettings):
-    """Configuración global de la aplicación.
-
-    El archivo .env cargado depende de la variable de entorno APP_ENV:
-        - APP_ENV=dev  -> .env.dev (default)
-        - APP_ENV=prod -> .env.prod
-    """
 
     APP_ENV: Literal["dev", "prod", "test"] = "dev"
 
@@ -64,7 +56,6 @@ class Settings(BaseSettings):
 
     @property
     def cors_origins_list(self) -> list[str]:
-        """Lista parseada de CORS_ORIGINS (separados por coma en .env)."""
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
 
     @property
@@ -72,7 +63,6 @@ class Settings(BaseSettings):
         return [m.strip() for m in self.ALLOWED_ATTACHMENT_MIMES.split(",") if m.strip()]
 
     def get_uploads_absolute_path(self) -> str:
-        """Resuelve UPLOADS_DIR a ruta absoluta (anclada al root del proyecto si es relativa)."""
         if os.path.isabs(self.UPLOADS_DIR):
             return self.UPLOADS_DIR
         project_root = os.path.dirname(
@@ -81,7 +71,6 @@ class Settings(BaseSettings):
         return os.path.join(project_root, self.UPLOADS_DIR)
 
     def get_database_absolute_path(self) -> str:
-        """Resuelve DATABASE_PATH a ruta absoluta. Si es relativa, se ancla a la raíz del proyecto."""
         if os.path.isabs(self.DATABASE_PATH):
             return self.DATABASE_PATH
         project_root = os.path.dirname(
@@ -90,9 +79,7 @@ class Settings(BaseSettings):
         return os.path.join(project_root, self.DATABASE_PATH)
 
     def get_database_url(self) -> str:
-        """URL en formato SQLAlchemy a partir de la ruta absoluta."""
         return f"sqlite:///{self.get_database_absolute_path()}"
-
 
 @lru_cache
 def get_settings() -> Settings:

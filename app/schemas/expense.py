@@ -4,7 +4,6 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-
 class ExpenseCreate(BaseModel):
     amount: float
     description: str
@@ -13,7 +12,6 @@ class ExpenseCreate(BaseModel):
     money_source_id: Optional[int] = None
     attachment_ids: Optional[list[int]] = None
 
-
 class ExpenseUpdate(BaseModel):
     amount: float
     description: str
@@ -21,18 +19,15 @@ class ExpenseUpdate(BaseModel):
     category: Optional[str] = None
     money_source_id: Optional[int] = None
 
-
 class ExpenseUserOut(BaseModel):
     id: int
     name: str
-
 
 class ExpenseMoneySourceOut(BaseModel):
     id: int
     name: str
     balance: float
     enabled: bool
-
 
 class ExpenseOut(BaseModel):
     id: int
@@ -44,7 +39,6 @@ class ExpenseOut(BaseModel):
     money_source: Optional[ExpenseMoneySourceOut] = None
     created_at: str
 
-
 class ExpenseCreatedOut(BaseModel):
     id: int
     user_id: int
@@ -55,14 +49,12 @@ class ExpenseCreatedOut(BaseModel):
     money_source_id: Optional[int] = None
     created_at: str
 
-
 class MoneySourceInfo(BaseModel):
     name: str
     balance_before: float
     amount_deducted: float
     balance_after: float
     warning: Optional[str] = None
-
 
 class BudgetAlert(BaseModel):
     type: str
@@ -71,18 +63,15 @@ class BudgetAlert(BaseModel):
     remaining: float
     percentage: float
 
-
 class ExpenseCreateResponse(BaseModel):
     expense: ExpenseCreatedOut
     budget_alerts: list[BudgetAlert] = []
     money_source: Optional[MoneySourceInfo] = None
 
-
 class CategorySummary(BaseModel):
     category: str
     total: float
     count: int
-
 
 class ExpenseSummaryOut(BaseModel):
     total: float

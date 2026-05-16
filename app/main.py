@@ -88,21 +88,17 @@ app.include_router(capture.router)
 app.include_router(chat.router)
 app.include_router(attachments.router)
 
-
 @app.on_event("startup")
 def on_startup():
     init_db()
 
-
 @app.get("/", tags=["Root"], summary="Estado de la API")
 def root():
-    """Verifica que la API está funcionando correctamente."""
     return {
         "message": "API de Gestión de Gastos funcionando",
         "environment": settings.APP_ENV,
         "version": app.version,
     }
-
 
 @app.get(
     "/api/_debug/repos",
@@ -116,7 +112,6 @@ def debug_repos(
     budget_repo: IBudgetRepository = Depends(get_budget_repo),
     movement_repo: IMoneySourceMovementRepository = Depends(get_movement_repo),
 ):
-    """Demuestra que SQL y JPA conviven en runtime."""
     if settings.APP_ENV != "dev":
         raise HTTPException(status_code=404, detail="Not found")
 
@@ -132,7 +127,6 @@ def debug_repos(
             "SQL_ECHO": settings.SQL_ECHO,
         },
     }
-
 
 if __name__ == "__main__":
     uvicorn.run(

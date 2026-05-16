@@ -1,15 +1,12 @@
-"""Contrato para repositorios de MoneySourceMovement (movimientos de fuentes)."""
 
 from abc import ABC, abstractmethod
 from typing import Optional
 
-
 class IMoneySourceMovementRepository(ABC):
-    """Interfaz del repositorio de movimientos. Implementación actual: SQL crudo."""
 
     @abstractmethod
     def get_by_source(self, source_id: int) -> list[dict]:
-        """Devuelve todos los movimientos de la fuente, más recientes primero."""
+        pass
 
     @abstractmethod
     def create(
@@ -23,11 +20,11 @@ class IMoneySourceMovementRepository(ABC):
         expense_id: Optional[int] = None,
         note: Optional[str] = None,
     ) -> dict:
-        """Crea un movimiento y devuelve el registro creado."""
+        pass
 
     @abstractmethod
     def has_movements(self, source_id: int) -> bool:
-        """Indica si la fuente tiene al menos un movimiento (bloquea borrados)."""
+        pass
 
     @abstractmethod
     def get_filtered(
@@ -39,4 +36,4 @@ class IMoneySourceMovementRepository(ABC):
         page: int = 1,
         limit: int = 20,
     ) -> dict:
-        """Lista paginada de movimientos. Estructura: {'movements': [...], 'pagination': {...}}."""
+        pass

@@ -1,4 +1,3 @@
-"""Implementación SQL crudo del repositorio de movimientos de fuentes de dinero."""
 
 import math
 from typing import Optional
@@ -18,9 +17,7 @@ _BASE_SELECT = """
     LEFT JOIN expenses e ON m.expense_id = e.id
 """
 
-
 class MoneySourceMovementSqlRepository(IMoneySourceMovementRepository):
-    """Repositorio de movimientos usando SQL crudo con sqlite3."""
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path

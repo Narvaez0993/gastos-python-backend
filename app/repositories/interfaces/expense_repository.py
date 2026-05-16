@@ -1,19 +1,16 @@
-"""Contrato para repositorios de Expense (gastos)."""
 
 from abc import ABC, abstractmethod
 from typing import Optional
 
-
 class IExpenseRepository(ABC):
-    """Interfaz del repositorio de gastos. Implementación actual: SQL crudo."""
 
     @abstractmethod
     def get_all(self) -> list[dict]:
-        """Devuelve todos los gastos con datos de usuario y fuente, ordenados por fecha desc."""
+        pass
 
     @abstractmethod
     def get_by_id(self, expense_id: int) -> Optional[dict]:
-        """Devuelve el gasto con sus joins, o None si no existe."""
+        pass
 
     @abstractmethod
     def create(
@@ -25,7 +22,7 @@ class IExpenseRepository(ABC):
         date: str,
         money_source_id: Optional[int] = None,
     ) -> dict:
-        """Crea un gasto y devuelve el registro creado con joins."""
+        pass
 
     @abstractmethod
     def update(
@@ -37,11 +34,11 @@ class IExpenseRepository(ABC):
         date: str,
         money_source_id: Optional[int] = None,
     ) -> Optional[dict]:
-        """Actualiza el gasto. Devuelve el registro actualizado o None si no existe."""
+        pass
 
     @abstractmethod
     def delete(self, expense_id: int) -> bool:
-        """Elimina el gasto. Devuelve True si se eliminó."""
+        pass
 
     @abstractmethod
     def get_filtered(
@@ -50,7 +47,7 @@ class IExpenseRepository(ABC):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> list[dict]:
-        """Lista gastos filtrados por usuario y rango de fechas (inclusive)."""
+        pass
 
     @abstractmethod
     def get_summary(
@@ -59,10 +56,10 @@ class IExpenseRepository(ABC):
         start_date: Optional[str] = None,
         end_date: Optional[str] = None,
     ) -> dict:
-        """Devuelve total y suma agrupada por categoría. {'total': float, 'by_category': [...]}"""
+        pass
 
     @abstractmethod
     def get_spent_in_period(
         self, user_id: int, start_date: str, end_date: str
     ) -> float:
-        """Suma de gastos del usuario en el rango. 0 si no hay."""
+        pass

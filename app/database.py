@@ -3,9 +3,6 @@ from typing import Optional
 
 from app.config.settings import get_settings
 
-
-# DDL único compartido entre init_db() y los tests (conftest lo importa para
-# evitar drift de schema entre runtime y fixtures).
 SCHEMA_SQL = """
 CREATE TABLE IF NOT EXISTS users (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -82,24 +79,18 @@ CREATE INDEX IF NOT EXISTS idx_attachments_user_id ON attachments(user_id);
 CREATE INDEX IF NOT EXISTS idx_attachments_expense_id ON attachments(expense_id);
 """
 
-
 def get_connection(db_path: Optional[str] = None):
-    """Abre una nueva conexión a SQLite. Si no se da db_path se usa la BD configurada."""
     path = db_path if db_path is not None else get_settings().get_database_absolute_path()
     conn = sqlite3.connect(path)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     return conn
 
-
 def close_connection(conn):
-    """Cierra una conexión a la base de datos de manera manual."""
     if conn:
         conn.close()
 
-
 def init_db():
-    """Crea todas las tablas si no existen, usando SQL crudo."""
     conn = get_connection()
     try:
         cursor = conn.cursor()

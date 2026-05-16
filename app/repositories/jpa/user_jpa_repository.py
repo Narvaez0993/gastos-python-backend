@@ -1,4 +1,3 @@
-"""Implementación JPA (SQLAlchemy ORM) del repositorio de usuarios."""
 
 from typing import Optional
 
@@ -9,14 +8,7 @@ from sqlalchemy.orm import Session
 from app.db.models.user_model import User
 from app.repositories.interfaces.user_repository import IUserRepository
 
-
 class UserJpaRepository(IUserRepository):
-    """Repositorio de usuarios usando SQLAlchemy ORM.
-
-    El shape de los dicts devueltos (sin `password_hash`) coincide con el del
-    repositorio SQL crudo. `get_by_email_with_credentials` es el único método
-    que expone el hash.
-    """
 
     def __init__(self, db: Session):
         self.db = db

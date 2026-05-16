@@ -1,4 +1,3 @@
-"""Verificación de presupuestos. Recibe los repositorios por parámetro (DIP)."""
 
 from __future__ import annotations
 
@@ -6,15 +5,12 @@ from app.repositories.interfaces.budget_repository import IBudgetRepository
 from app.repositories.interfaces.expense_repository import IExpenseRepository
 from app.utils.dates import get_period_range
 
-
 def check_budgets(
     budget_repo: IBudgetRepository,
     expense_repo: IExpenseRepository,
     user_id: int,
     tz: str = "America/Bogota",
 ) -> list[dict]:
-    """Verifica los presupuestos habilitados del usuario y retorna alertas para los
-    que están al 80% o más de su límite en el periodo correspondiente."""
     budgets = budget_repo.get_enabled_by_user(user_id)
     alerts: list[dict] = []
 

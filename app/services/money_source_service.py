@@ -9,9 +9,7 @@ from app.repositories.interfaces.money_source_movement_repository import (
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
 
-
 def _format_movement(row):
-    """Formatea un movimiento de la BD al formato de respuesta."""
     expense_data = None
     if row.get("expense_id") and row.get("expense_description"):
         expense_data = {
@@ -33,9 +31,7 @@ def _format_movement(row):
         "created_at": row["created_at"],
     }
 
-
 class MoneySourceService:
-    """Lógica de negocio para fuentes de dinero. El user_id viene del JWT."""
 
     def __init__(
         self,

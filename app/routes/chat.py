@@ -1,4 +1,3 @@
-"""Endpoint del asistente conversacional financiero."""
 
 from typing import Optional
 
@@ -12,7 +11,6 @@ from app.services.expense_service import resolve_tz
 
 router = APIRouter(prefix="/api/chat", tags=["Chat IA"])
 
-
 @router.post(
     "",
     response_model=ChatResponse,
@@ -25,11 +23,6 @@ def chat(
     current_user: dict = Depends(get_current_user),
     service: AIChatService = Depends(get_ai_chat_service),
 ):
-    """Procesa el historial completo y devuelve la respuesta del asistente.
-
-    Claude puede llamar tools (get_summary, query_expenses, etc.) en el
-    proceso. El cliente NO necesita reenviar las tool_use/tool_result
-    intermedias — solo el array conversacional plano."""
     resolved_tz = resolve_tz(tz, x_timezone)
     message, iterations = service.chat(body.messages, current_user["id"], resolved_tz)
     return ChatResponse(

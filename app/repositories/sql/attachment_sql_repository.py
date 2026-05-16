@@ -1,9 +1,7 @@
-"""Repositorio SQL crudo para attachments (recibos)."""
 
 from typing import Optional
 
 from app.database import close_connection, get_connection
-
 
 class AttachmentSqlRepository:
     def __init__(self, db_path: Optional[str] = None):

@@ -1,4 +1,3 @@
-"""Endpoints de captura de gastos con IA."""
 
 from typing import Optional
 
@@ -17,7 +16,6 @@ from app.services.expense_service import resolve_tz
 
 router = APIRouter(prefix="/api/capture", tags=["Captura IA"])
 
-
 @router.post(
     "/text",
     response_model=CaptureResponse,
@@ -30,10 +28,8 @@ def capture_text(
     current_user: dict = Depends(get_current_user),
     service: AICaptureService = Depends(get_ai_capture_service),
 ):
-    """Devuelve una lista de gastos detectados a partir del texto."""
     resolved_tz = resolve_tz(tz, x_timezone)
     return service.parse_text(body.text, current_user["id"], resolved_tz)
-
 
 @router.post(
     "/receipt",
@@ -47,7 +43,6 @@ def capture_receipt(
     current_user: dict = Depends(get_current_user),
     service: AttachmentService = Depends(get_attachment_service),
 ):
-    """Lee la imagen/PDF de un adjunto con Vision y devuelve los gastos detectados."""
     resolved_tz = resolve_tz(tz, x_timezone)
     return service.parse_with_vision(
         body.attachment_id, current_user["id"], resolved_tz

@@ -4,17 +4,14 @@ from typing import Optional
 
 from pydantic import BaseModel
 
-
 class MoneySourceCreate(BaseModel):
     name: str
     balance: float = 0
-
 
 class MoneySourceUpdate(BaseModel):
     balance: Optional[float] = None
     enabled: Optional[bool] = None
     name: Optional[str] = None
-
 
 class MoneySourceOut(BaseModel):
     id: int
@@ -24,7 +21,6 @@ class MoneySourceOut(BaseModel):
     balance: float
     enabled: bool
     created_at: str
-
 
 class DepositRequest(BaseModel):
     amount: float

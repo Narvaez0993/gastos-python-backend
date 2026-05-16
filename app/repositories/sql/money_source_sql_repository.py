@@ -1,4 +1,3 @@
-"""Implementación SQL crudo del repositorio de fuentes de dinero."""
 
 from typing import Optional
 
@@ -9,9 +8,7 @@ _COLUMNS = (
     "id, user_id, name, name_normalized, balance, enabled, created_at"
 )
 
-
 class MoneySourceSqlRepository(IMoneySourceRepository):
-    """Repositorio de fuentes de dinero usando SQL crudo con sqlite3."""
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path

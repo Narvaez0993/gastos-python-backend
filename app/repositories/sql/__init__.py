@@ -1,4 +1,3 @@
-"""Implementaciones de repositorios usando SQL crudo (sqlite3 nativo)."""
 
 from app.repositories.sql.attachment_sql_repository import AttachmentSqlRepository
 from app.repositories.sql.budget_sql_repository import BudgetSqlRepository

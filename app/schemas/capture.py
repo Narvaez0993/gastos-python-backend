@@ -1,18 +1,13 @@
-"""Schemas Pydantic para el flujo de captura de gastos con IA."""
 
 from typing import List, Literal, Optional
 
 from pydantic import BaseModel, Field
 
-
 class CaptureTextRequest(BaseModel):
-    """Texto en lenguaje natural a parsear por Claude."""
 
     text: str = Field(min_length=1, max_length=2000)
 
-
 class ParsedExpenseItem(BaseModel):
-    """Un gasto detectado por Claude a partir del texto/audio."""
 
     amount: int = Field(ge=0, description="Monto en COP, entero (sin decimales).")
     description: str = Field(min_length=1, max_length=140)
@@ -30,9 +25,7 @@ class ParsedExpenseItem(BaseModel):
         description="Razonamiento corto/aclaración del modelo (opcional).",
     )
 
-
 class CaptureResponse(BaseModel):
-    """Respuesta unificada de los endpoints /capture/*."""
 
     items: List[ParsedExpenseItem]
     transcript: str

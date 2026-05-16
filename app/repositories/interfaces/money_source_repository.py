@@ -1,29 +1,26 @@
-"""Contrato para repositorios de MoneySource (fuentes de dinero)."""
 
 from abc import ABC, abstractmethod
 from typing import Optional
 
-
 class IMoneySourceRepository(ABC):
-    """Interfaz del repositorio de fuentes de dinero. Implementaciones: SQL crudo y JPA."""
 
     @abstractmethod
     def get_all(self) -> list[dict]:
-        """Devuelve todas las fuentes ordenadas: habilitadas primero, luego por nombre."""
+        pass
 
     @abstractmethod
     def get_by_id(self, source_id: int) -> Optional[dict]:
-        """Devuelve la fuente con el id dado, o None si no existe."""
+        pass
 
     @abstractmethod
     def get_by_user(self, user_id: int) -> list[dict]:
-        """Devuelve las fuentes del usuario ordenadas: habilitadas primero, luego por nombre."""
+        pass
 
     @abstractmethod
     def get_by_user_and_normalized_name(
         self, user_id: int, name_normalized: str
     ) -> Optional[dict]:
-        """Busca por dueño y nombre normalizado (clave de unicidad). None si no existe."""
+        pass
 
     @abstractmethod
     def create(
@@ -33,7 +30,7 @@ class IMoneySourceRepository(ABC):
         name_normalized: str,
         balance: float = 0,
     ) -> dict:
-        """Crea una nueva fuente y devuelve el registro creado."""
+        pass
 
     @abstractmethod
     def update(
@@ -44,15 +41,15 @@ class IMoneySourceRepository(ABC):
         balance: Optional[float] = None,
         enabled: Optional[bool] = None,
     ) -> Optional[dict]:
-        """Actualiza los campos no nulos. Devuelve el registro actualizado o None si no existe."""
+        pass
 
     @abstractmethod
     def update_balance(self, source_id: int, new_balance: float) -> bool:
-        """Actualiza solo el balance. Útil tras un gasto o depósito."""
+        pass
 
     @abstractmethod
     def delete(self, source_id: int) -> bool:
-        """Elimina la fuente. Devuelve True si se eliminó."""
+        pass
 
     @abstractmethod
     def check_duplicate_name(
@@ -61,4 +58,4 @@ class IMoneySourceRepository(ABC):
         name_normalized: str,
         exclude_id: Optional[int] = None,
     ) -> bool:
-        """Verifica si ya existe otra fuente del mismo dueño con el mismo nombre normalizado."""
+        pass

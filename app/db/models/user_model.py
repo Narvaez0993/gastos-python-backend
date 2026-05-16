@@ -1,13 +1,10 @@
-"""Modelo ORM User mapeado a la tabla users."""
 
 from sqlalchemy import Integer, Text, text
 from sqlalchemy.orm import Mapped, mapped_column
 
 from app.db.base import Base
 
-
 class User(Base):
-    """Mapeo ORM de la tabla users (creada por SQL crudo en init_db)."""
 
     __tablename__ = "users"
 

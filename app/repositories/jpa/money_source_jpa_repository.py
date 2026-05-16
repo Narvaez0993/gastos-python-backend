@@ -1,4 +1,3 @@
-"""Implementación JPA (SQLAlchemy ORM) del repositorio de fuentes de dinero."""
 
 from typing import Optional
 
@@ -8,9 +7,7 @@ from sqlalchemy.orm import Session
 from app.db.models.money_source_model import MoneySource
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
 
-
 class MoneySourceJpaRepository(IMoneySourceRepository):
-    """Repositorio de fuentes de dinero usando SQLAlchemy ORM."""
 
     def __init__(self, db: Session):
         self.db = db

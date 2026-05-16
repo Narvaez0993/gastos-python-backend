@@ -1,4 +1,3 @@
-"""Implementación SQL crudo del repositorio de gastos."""
 
 from typing import Optional
 
@@ -16,9 +15,7 @@ _BASE_SELECT = """
     LEFT JOIN money_sources ms ON e.money_source_id = ms.id
 """
 
-
 class ExpenseSqlRepository(IExpenseRepository):
-    """Repositorio de gastos usando SQL crudo con sqlite3."""
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path

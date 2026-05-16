@@ -1,4 +1,3 @@
-"""Implementación SQL crudo del repositorio de presupuestos."""
 
 from typing import Optional
 
@@ -12,9 +11,7 @@ _BASE_SELECT = """
     JOIN users u ON b.user_id = u.id
 """
 
-
 class BudgetSqlRepository(IBudgetRepository):
-    """Repositorio de presupuestos usando SQL crudo con sqlite3."""
 
     def __init__(self, db_path: Optional[str] = None):
         self.db_path = db_path
