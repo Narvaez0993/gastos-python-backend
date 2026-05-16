@@ -18,7 +18,15 @@ from app.repositories.interfaces.money_source_movement_repository import (
 )
 from app.repositories.interfaces.money_source_repository import IMoneySourceRepository
 from app.repositories.interfaces.user_repository import IUserRepository
-from app.routes import attachments, auth, budgets, capture, expenses, money_sources
+from app.routes import (
+    attachments,
+    auth,
+    budgets,
+    capture,
+    chat,
+    expenses,
+    money_sources,
+)
 
 settings = get_settings()
 
@@ -54,6 +62,10 @@ app = FastAPI(
             "description": "Parsing de gastos en lenguaje natural usando Claude (texto, audio, recibos).",
         },
         {
+            "name": "Chat IA",
+            "description": "Asistente conversacional financiero con acceso a los datos del usuario vía tools.",
+        },
+        {
             "name": "Adjuntos",
             "description": "Subida y descarga de recibos/facturas vinculados a gastos.",
         },
@@ -73,6 +85,7 @@ app.include_router(expenses.router)
 app.include_router(budgets.router)
 app.include_router(money_sources.router)
 app.include_router(capture.router)
+app.include_router(chat.router)
 app.include_router(attachments.router)
 
 

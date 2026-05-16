@@ -64,12 +64,24 @@ def get_period_range(
     elif period == "weekly":
         weekday = today_dt.weekday()
         monday = today_dt - timedelta(days=weekday)
-        monday_str = monday.strftime("%Y-%m-%d")
-        return local_day_start_utc(monday_str, tz), local_day_end_utc(today, tz)
+        sunday = monday + timedelta(days=6)
+        return (
+            local_day_start_utc(monday.strftime("%Y-%m-%d"), tz),
+            local_day_end_utc(sunday.strftime("%Y-%m-%d"), tz),
+        )
     elif period == "monthly":
         first_of_month = today_dt.replace(day=1)
-        first_str = first_of_month.strftime("%Y-%m-%d")
-        return local_day_start_utc(first_str, tz), local_day_end_utc(today, tz)
+        if first_of_month.month == 12:
+            next_month = first_of_month.replace(
+                year=first_of_month.year + 1, month=1
+            )
+        else:
+            next_month = first_of_month.replace(month=first_of_month.month + 1)
+        last_of_month = next_month - timedelta(days=1)
+        return (
+            local_day_start_utc(first_of_month.strftime("%Y-%m-%d"), tz),
+            local_day_end_utc(last_of_month.strftime("%Y-%m-%d"), tz),
+        )
 
     return None, None
 

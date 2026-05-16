@@ -28,6 +28,7 @@ from app.repositories.sql import (
     UserSqlRepository,
 )
 from app.services.ai_capture_service import AICaptureService
+from app.services.ai_chat_service import AIChatService
 from app.services.attachment_service import AttachmentService
 from app.services.auth_service import AuthService
 from app.services.budget_service import BudgetService
@@ -107,6 +108,14 @@ def get_ai_capture_service(
     money_source_repo: IMoneySourceRepository = Depends(get_money_source_repo),
 ) -> AICaptureService:
     return AICaptureService(get_settings(), money_source_repo)
+
+
+def get_ai_chat_service(
+    expense_repo: IExpenseRepository = Depends(get_expense_repo),
+    budget_repo: IBudgetRepository = Depends(get_budget_repo),
+    money_source_repo: IMoneySourceRepository = Depends(get_money_source_repo),
+) -> AIChatService:
+    return AIChatService(get_settings(), expense_repo, budget_repo, money_source_repo)
 
 
 def get_attachment_repo() -> AttachmentSqlRepository:
